@@ -10,7 +10,6 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
-import android.renderscript.ScriptGroup;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -32,6 +31,7 @@ public class ActivityMain extends AppCompatActivity {
     private ControlService mBoundService;
     private ServiceConnection mServiceConnection;
     final Messenger mMessenger = new Messenger(new IncomingHandler());
+    private Integer mCurrentServiceState = null;
 
     /** Messenger for communicating with service. */
     Messenger mService = null;
@@ -46,15 +46,7 @@ public class ActivityMain extends AppCompatActivity {
     class IncomingHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
-            /*
-            switch (msg.what) {
-                case ControlService.MSG_SET_VALUE:
-                    mCallbackText.setText("Received from service: " + msg.arg1);
-                    break;
-                default:
-                    super.handleMessage(msg);
-            }
-            */
+            mCurrentServiceState = msg.what;
         }
     }
 
@@ -69,27 +61,88 @@ public class ActivityMain extends AppCompatActivity {
         unblockCallsBtn = (Button) findViewById(R.id.unblock_calls_btn);
         logo = (ImageView) findViewById(R.id.logo);
 
+        initiateConnection();
+
         blockCallsBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                if (mService == null) {
+                    startService(new Intent(ActivityMain.this, ControlService.class));
+                    initiateConnection();
+                    doBindService();
+                }
+                sendMessageToService(ControlService.MSG_BLOCK_CALLS);
+                doUnbindService();
+                blockCallsBtn.setVisibility(View.GONE);
+                unblockCallsBtn.setVisibility(View.VISIBLE);
             }
         });
 
         unblockCallsBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                if (mService == null) {
+                    startService(new Intent(ActivityMain.this, ControlService.class));
+                    initiateConnection();
+                    doBindService();
+                }
+                sendMessageToService(ControlService.MSG_KILL_CONTROL_SERVICE);
+                doUnbindService();
+                mService = null;
+                blockCallsBtn.setVisibility(View.VISIBLE);
+                unblockCallsBtn.setVisibility(View.GONE);
             }
         });
 
         logo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                switch (mCurrentServiceState) {
+                    case ControlService.STATE_BLOCK_CALLS:
+                        break;
+                    case ControlService.STATE_UNBLOCK_CALLS:
+                        break;
+                    case ControlService.STATE_PAUSE_BLOCK_CALLS:
+                        break;
+                    default:
+                        break;
+                }
             }
         });
+    }
 
+    void doBindService() {
+        // Establish a connection with the service.  We use an explicit
+        // class name because there is no reason to be able to let other
+        // applications replace our component.
+        bindService(new Intent(this,
+                ControlService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
+        mIsBound = true;
+        mCallbackText.setText("Binding.");
+    }
+
+    void doUnbindService() {
+        if (mIsBound) {
+            // Detach our existing connection.
+            unbindService(mServiceConnection);
+            mIsBound = false;
+            mCallbackText.setText("Unbinding.");
+        }
+    }
+
+    void sendMessageToService (Integer m) {
+        if (mService != null) {
+            try {
+                Message msg = Message.obtain(null, m);
+                msg.replyTo = mMessenger;
+                mService.send(msg);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    void initiateConnection () {
         mServiceConnection = new ServiceConnection() {
             public void onServiceConnected(ComponentName className,
                                            IBinder service) {
@@ -135,36 +188,7 @@ public class ActivityMain extends AppCompatActivity {
         };
     }
 
-    void doBindService() {
-        // Establish a connection with the service.  We use an explicit
-        // class name because there is no reason to be able to let other
-        // applications replace our component.
-        bindService(new Intent(this,
-                ControlService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
-        mIsBound = true;
-        mCallbackText.setText("Binding.");
-    }
-
-    void doUnbindService() {
-        if (mIsBound) {
-            // If we have received the service, and hence registered with
-            // it, then now is the time to unregister.
-            if (mService != null) {
-                try {
-                    Message msg = Message.obtain(null,
-                            ControlService.MSG_PAUSE_BLOCK_CALLS);
-                    msg.replyTo = mMessenger;
-                    mService.send(msg);
-                } catch (RemoteException e) {
-                    // There is nothing special we need to do if the service
-                    // has crashed.
-                }
-            }
-
-            // Detach our existing connection.
-            unbindService(mServiceConnection);
-            mIsBound = false;
-            mCallbackText.setText("Unbinding.");
-        }
+    void getControlServiceState () {
+        sendMessageToService(ControlService.MSG_GET_STATE);
     }
 }

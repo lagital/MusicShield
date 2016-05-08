@@ -14,6 +14,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.Process;
+import android.os.RemoteException;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -33,15 +34,20 @@ public class ControlService extends Service {
     public static final int MSG_UNBLOCK_CALLS = 0;
     public static final int MSG_PAUSE_BLOCK_CALLS = -1;
     public static final int MSG_KILL_CONTROL_SERVICE = -2;
+    public static final int MSG_GET_STATE = 100;
+    public static final int STATE_BLOCK_CALLS = 1;
+    public static final int STATE_UNBLOCK_CALLS = 0;
+    public static final int STATE_PAUSE_BLOCK_CALLS = -1;
+    public static final int STATE_KILL_CONTROL_SERVICE = -2;
     private int NOTIFICATION = R.string.contorol_service_idt;
 
     private PhoneStateListener mPhoneStateListener;
     private Looper mServiceLooper;
-    private ServiceHandler mServiceHandler;
-    private int mBlockingState;
+    private int mCurrentState;
     private TelephonyManager mTelephonyManager;
     ITelephony mTelephonyService = null;
     private NotificationManager mNotificationManager;
+    final Messenger mMessenger = new Messenger(new ServiceHandler());
 
     public class LocalBinder extends Binder {
         ControlService getService() {
@@ -54,23 +60,25 @@ public class ControlService extends Service {
 
     // Handler that receives messages from the thread
     private final class ServiceHandler extends Handler {
-        public ServiceHandler(Looper looper) {
-            super(looper);
-        }
-
         @Override
         public void handleMessage(Message msg) {
-            // Normally we would do some work here, like download a file.
-            // For our sample, we just sleep for 5 seconds.
-
+            Log.d(TAG, "handleMessage");
             switch (msg.arg1) {
                 case MSG_BLOCK_CALLS:
+                    mCurrentState = STATE_BLOCK_CALLS;
                     break;
                 case MSG_UNBLOCK_CALLS:
+                    mCurrentState = STATE_UNBLOCK_CALLS;
                     break;
                 case MSG_PAUSE_BLOCK_CALLS:
+                    mCurrentState = STATE_PAUSE_BLOCK_CALLS
                     break;
                 case MSG_KILL_CONTROL_SERVICE:
+                    break;
+                case MSG_GET_STATE:
+                    msg.replyTo = mMessenger;  // set the handler of the reply activity.
+                    msg.arg1 = mCurrentState;  // if any additional data available put to a bundle
+                    mMessenger.send(msg);
                     break;
                 default:
                     break;
@@ -94,7 +102,7 @@ public class ControlService extends Service {
 
         // Get the HandlerThread's Looper and use it for our Handler
         mServiceLooper = thread.getLooper();
-        mServiceHandler = new ServiceHandler(mServiceLooper);
+        mServiceHandler = new ServiceHandler();
         mNotificationManager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 
         mPhoneStateListener = new ControlPhoneStateListener();
@@ -189,5 +197,17 @@ public class ControlService extends Service {
 
         // Send the notification.
         mNotificationManager.notify(NOTIFICATION, notification);
+    }
+
+    void sendMessageToActivity (Integer m) {
+        if (mService != null) {
+            try {
+                Message msg = Message.obtain(null, m);
+                msg.replyTo = mMessenger;
+                mService.send(msg);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }
