@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">MusicShield</string>
-    <string name="block_calls_btn">Raise the Shield</string>
-    <string name="unblock_calls_btn">Lay Down the Shield</string>
+    <string name="block_calls_btn">Raise Shield</string>
+    <string name="unblock_calls_btn">Lay Down Shield</string>
     <string name="contorol_service_idt">13010</string>
 </resources>

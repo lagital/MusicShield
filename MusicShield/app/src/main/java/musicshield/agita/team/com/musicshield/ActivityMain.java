@@ -54,6 +54,7 @@ public class ActivityMain extends AppCompatActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        Log.d(TAG, "onCreate");
 
         startService(new Intent(this, ControlService.class));
 
@@ -97,14 +98,16 @@ public class ActivityMain extends AppCompatActivity {
         logo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                getControlServiceState();
                 switch (mCurrentServiceState) {
                     case ControlService.STATE_BLOCK_CALLS:
+                        sendMessageToService(ControlService.MSG_UNBLOCK_CALLS);
                         break;
                     case ControlService.STATE_UNBLOCK_CALLS:
+                        sendMessageToService(ControlService.MSG_BLOCK_CALLS);
                         break;
                     case ControlService.STATE_PAUSE_BLOCK_CALLS:
-                        break;
-                    default:
+                        sendMessageToService(ControlService.MSG_BLOCK_CALLS);
                         break;
                 }
             }
@@ -112,25 +115,26 @@ public class ActivityMain extends AppCompatActivity {
     }
 
     void doBindService() {
+        Log.d(TAG, "doBindService");
         // Establish a connection with the service.  We use an explicit
         // class name because there is no reason to be able to let other
         // applications replace our component.
         bindService(new Intent(this,
                 ControlService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
         mIsBound = true;
-        mCallbackText.setText("Binding.");
     }
 
     void doUnbindService() {
+        Log.d(TAG, "doUnbindService");
         if (mIsBound) {
             // Detach our existing connection.
             unbindService(mServiceConnection);
             mIsBound = false;
-            mCallbackText.setText("Unbinding.");
         }
     }
 
     void sendMessageToService (Integer m) {
+        Log.d(TAG, "sendMessageToService: " + Integer.toString(m));
         if (mService != null) {
             try {
                 Message msg = Message.obtain(null, m);
@@ -143,6 +147,7 @@ public class ActivityMain extends AppCompatActivity {
     }
 
     void initiateConnection () {
+        Log.d(TAG, "initiateConnection");
         mServiceConnection = new ServiceConnection() {
             public void onServiceConnected(ComponentName className,
                                            IBinder service) {

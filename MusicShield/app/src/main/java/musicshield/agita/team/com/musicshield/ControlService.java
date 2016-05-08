@@ -14,7 +14,6 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.Process;
-import android.os.RemoteException;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -38,16 +37,16 @@ public class ControlService extends Service {
     public static final int STATE_BLOCK_CALLS = 1;
     public static final int STATE_UNBLOCK_CALLS = 0;
     public static final int STATE_PAUSE_BLOCK_CALLS = -1;
-    public static final int STATE_KILL_CONTROL_SERVICE = -2;
     private int NOTIFICATION = R.string.contorol_service_idt;
 
     private PhoneStateListener mPhoneStateListener;
+    private ServiceHandler mServiceHandler;
     private Looper mServiceLooper;
     private int mCurrentState;
     private TelephonyManager mTelephonyManager;
     ITelephony mTelephonyService = null;
     private NotificationManager mNotificationManager;
-    final Messenger mMessenger = new Messenger(new ServiceHandler());
+    private Messenger mMessenger;
 
     public class LocalBinder extends Binder {
         ControlService getService() {
@@ -60,9 +59,15 @@ public class ControlService extends Service {
 
     // Handler that receives messages from the thread
     private final class ServiceHandler extends Handler {
+
+        public ServiceHandler(Looper looper) {
+            super(looper);
+            Log.d(TAG, "ServiceHandler constructor");
+        }
+
         @Override
         public void handleMessage(Message msg) {
-            Log.d(TAG, "handleMessage");
+            Log.d(TAG, "handleMessage: " + Integer.toString(msg.arg1));
             switch (msg.arg1) {
                 case MSG_BLOCK_CALLS:
                     mCurrentState = STATE_BLOCK_CALLS;
@@ -71,14 +76,15 @@ public class ControlService extends Service {
                     mCurrentState = STATE_UNBLOCK_CALLS;
                     break;
                 case MSG_PAUSE_BLOCK_CALLS:
-                    mCurrentState = STATE_PAUSE_BLOCK_CALLS
+                    mCurrentState = STATE_PAUSE_BLOCK_CALLS;
                     break;
                 case MSG_KILL_CONTROL_SERVICE:
+                    onDestroy();
                     break;
                 case MSG_GET_STATE:
                     msg.replyTo = mMessenger;  // set the handler of the reply activity.
                     msg.arg1 = mCurrentState;  // if any additional data available put to a bundle
-                    mMessenger.send(msg);
+                    mServiceHandler.sendMessage(msg);
                     break;
                 default:
                     break;
@@ -92,6 +98,7 @@ public class ControlService extends Service {
 
     @Override
     public void onCreate() {
+        Log.d(TAG, "onCreate");
         // Start up the thread running the service.  Note that we create a
         // separate thread because the service normally runs in the process's
         // main thread, which we don't want to block.  We also make it
@@ -102,7 +109,8 @@ public class ControlService extends Service {
 
         // Get the HandlerThread's Looper and use it for our Handler
         mServiceLooper = thread.getLooper();
-        mServiceHandler = new ServiceHandler();
+        mServiceHandler = new ServiceHandler(mServiceLooper);
+        mMessenger = new Messenger(mServiceHandler);
         mNotificationManager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 
         mPhoneStateListener = new ControlPhoneStateListener();
@@ -114,10 +122,7 @@ public class ControlService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        // For each start request, send a message to start a job and deliver the
-        // start ID so we know which request we're stopping when we finish the job
-        Message msg = mServiceHandler.obtainMessage();
-
+        Log.d(TAG, "onStartCommand");
         // If we get killed, after returning from here, restart
         return START_STICKY;
     }
@@ -134,7 +139,7 @@ public class ControlService extends Service {
         return mBinder;
     }
 
-    private void initiateTelephonyService () {
+    private void initiateTelephonyService() {
         Class c = null;
         try {
             c = Class.forName(mTelephonyManager.getClass().getName());
@@ -167,8 +172,12 @@ public class ControlService extends Service {
             super.onCallStateChanged(state, incomingNumber);
 
             if (state == TelephonyManager.CALL_STATE_RINGING) {
-                if (mBlockingState == MSG_BLOCK_CALLS) {
-
+                if (mCurrentState == MSG_BLOCK_CALLS) {
+                    try {
+                        mTelephonyService.endCall();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 } else {
                     //nothing
                 }
@@ -197,17 +206,5 @@ public class ControlService extends Service {
 
         // Send the notification.
         mNotificationManager.notify(NOTIFICATION, notification);
-    }
-
-    void sendMessageToActivity (Integer m) {
-        if (mService != null) {
-            try {
-                Message msg = Message.obtain(null, m);
-                msg.replyTo = mMessenger;
-                mService.send(msg);
-            } catch (RemoteException e) {
-                e.printStackTrace();
-            }
-        }
     }
 }
