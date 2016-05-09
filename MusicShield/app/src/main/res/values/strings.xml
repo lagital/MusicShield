@@ -1,6 +1,11 @@
 <resources>
-    <string name="app_name">MusicShield</string>
+    <!--Application-->
+    <string name="app_name">Music Shield</string>
+    <!--Main Activity-->
     <string name="block_calls_btn">Raise Shield</string>
     <string name="unblock_calls_btn">Lay Down Shield</string>
     <string name="contorol_service_idt">13010</string>
+    <!--Notification-->
+    <string name="notification_missed_calls_title">Missed calls:</string>
+    <string name="update_availability_status_title">Update is available!</string>
 </resources>

@@ -13,9 +13,12 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.Process;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.TaskStackBuilder;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.widget.RemoteViews;
 
 import com.android.internal.telephony.ITelephony;
 
@@ -187,23 +190,40 @@ public class ControlService extends Service {
      * Show a notification while this service is running.
      */
     private void showNotification() {
-        // The PendingIntent to launch our activity if the user selects this notification
-        PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-                new Intent(this, ActivityMain.class), 0);
+        RemoteViews remoteViews = new RemoteViews(getPackageName(),
+                R.layout.notification);
+        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(
+                this).setSmallIcon(R.drawable.logo_disabled).setContent(
+                remoteViews);
+        // Creates an explicit intent for an Activity in your app
+        Intent toActivityIntent     = new Intent(this, ActivityMain.class);
+        Intent blockCallsIntent     = new Intent(this, ControlService.class);
+        Intent unblockCallsIntent   = new Intent(this, ControlService.class);
+        Intent pauseCallsIntent     = new Intent(this, ControlService.class);
 
-        // Set the info for the views that show in the notification panel.
-        Notification notification = new Notification.Builder(this)
-                .setSmallIcon(R.drawable.notification_icon)  // the status icon
-                .setTicker("TEST")  // the status text
-                .setWhen(System.currentTimeMillis())  // the time stamp
-                .setContentTitle("TEST")  // the label of the entry
-                .setContentText("TEST")  // the contents of the entry
-                .setContentIntent(contentIntent)  // The intent to send when the entry is clicked
-                .setPriority(Notification.PRIORITY_MAX)
-                .build();
-        notification.flags = Notification.FLAG_ONGOING_EVENT;
+        blockCallsIntent.putExtra("MSG", ControlService.MSG_BLOCK_CALLS);
+        unblockCallsIntent.putExtra("MSG", ControlService.MSG_UNBLOCK_CALLS);
+        pauseCallsIntent.putExtra("MSG", ControlService.MSG_PAUSE_BLOCK_CALLS);
 
-        // Send the notification.
-        mNotificationManager.notify(NOTIFICATION, notification);
+        /*PendingIntent toActivityPendingIntent = stackBuilder.getPendingIntent(0,
+                PendingIntent.FLAG_UPDATE_CURRENT);*/
+        PendingIntent blockCallsPendingIntent = PendingIntent.getService
+                (this, 579, blockCallsIntent, PendingIntent.FLAG_NO_CREATE);
+        PendingIntent unblockCallsPendingIntent = PendingIntent.getService
+                (this, 579, unblockCallsIntent, PendingIntent.FLAG_NO_CREATE);
+        PendingIntent pauseCallsPendingIntent = PendingIntent.getService
+                (this, 579, pauseCallsIntent, PendingIntent.FLAG_NO_CREATE);
+
+        remoteViews.setOnClickPendingIntent(R.id.notification_block_calls_btn,
+                blockCallsPendingIntent);
+        remoteViews.setOnClickPendingIntent(R.id.notification_unblock_calls_btn,
+                unblockCallsPendingIntent);
+        remoteViews.setOnClickPendingIntent(R.id.notification_pause_calls_blocking_btn,
+                pauseCallsPendingIntent);
+        NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        Notification n = mBuilder.build();
+        n.flags = Notification.FLAG_ONGOING_EVENT;
+        // mId allows you to update the notification later on.
+        mNotificationManager.notify(NOTIFICATION, n);
     }
 }
