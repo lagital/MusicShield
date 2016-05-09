@@ -1,5 +1,6 @@
 package musicshield.agita.team.com.musicshield;
 
+import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -15,7 +16,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.TextView;
+import android.widget.LinearLayout;
 
 /**
  * Created by pborisenko on 5/8/2016.
@@ -28,25 +29,23 @@ public class ActivityMain extends AppCompatActivity {
     private Button blockCallsBtn;
     private Button unblockCallsBtn;
     private ImageView logo;
-    private ControlService mBoundService;
+    private LinearLayout mainLayout;
     private ServiceConnection mServiceConnection;
     final Messenger mMessenger = new Messenger(new IncomingHandler());
-    private Integer mCurrentServiceState = null;
-
     /** Messenger for communicating with service. */
-    Messenger mService = null;
+    Messenger toServiceMessenger;
+    private Integer mCurrentServiceState = ControlService.STATE_UNBLOCK_CALLS;
+
     /** Flag indicating whether we have called bind on the service. */
     boolean mIsBound;
-    /** Some text view we are using to show state information. */
-    TextView mCallbackText;
-
     /**
      * Handler of incoming messages from service.
      */
     class IncomingHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
-            mCurrentServiceState = msg.what;
+            Log.d(TAG, "Message handled: " + Integer.toString(msg.arg1));
+            mCurrentServiceState = msg.arg1;
         }
     }
 
@@ -56,58 +55,70 @@ public class ActivityMain extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Log.d(TAG, "onCreate");
 
-        startService(new Intent(this, ControlService.class));
+        checkAndRunService(ControlService.class);
+        getControlServiceState();
 
         blockCallsBtn = (Button) findViewById(R.id.block_calls_btn);
         unblockCallsBtn = (Button) findViewById(R.id.unblock_calls_btn);
         logo = (ImageView) findViewById(R.id.logo);
-
-        initiateConnection();
+        mainLayout = (LinearLayout) findViewById(R.id.main_layout);
+        updateUI(mCurrentServiceState);
 
         blockCallsBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mService == null) {
-                    startService(new Intent(ActivityMain.this, ControlService.class));
-                    initiateConnection();
-                    doBindService();
-                }
+                Log.d(TAG, "Button - block calls");
+                checkAndRunService(ControlService.class);
                 sendMessageToService(ControlService.MSG_BLOCK_CALLS);
-                doUnbindService();
-                blockCallsBtn.setVisibility(View.GONE);
                 unblockCallsBtn.setVisibility(View.VISIBLE);
+                blockCallsBtn.setVisibility(View.GONE);
+                logo.setBackgroundResource(R.drawable.logo_enabled);
+                //updateUI(ControlService.STATE_BLOCK_CALLS);
             }
         });
 
         unblockCallsBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (mService == null) {
-                    startService(new Intent(ActivityMain.this, ControlService.class));
-                    initiateConnection();
-                    doBindService();
-                }
-                sendMessageToService(ControlService.MSG_KILL_CONTROL_SERVICE);
-                doUnbindService();
-                mService = null;
-                blockCallsBtn.setVisibility(View.VISIBLE);
+                Log.d(TAG, "Button - unblock calls");
+                checkAndRunService(ControlService.class);
+                sendMessageToService(ControlService.MSG_UNBLOCK_CALLS);
                 unblockCallsBtn.setVisibility(View.GONE);
+                blockCallsBtn.setVisibility(View.VISIBLE);
+                logo.setBackgroundResource(R.drawable.logo_disabled);
+                //updateUI(ControlService.STATE_UNBLOCK_CALLS);
             }
         });
 
         logo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                checkAndRunService(ControlService.class);
                 getControlServiceState();
                 switch (mCurrentServiceState) {
                     case ControlService.STATE_BLOCK_CALLS:
+                        Log.d(TAG, "Logo - unblock calls");
                         sendMessageToService(ControlService.MSG_UNBLOCK_CALLS);
+                        //updateUI(ControlService.STATE_UNBLOCK_CALLS);
+                        unblockCallsBtn.setVisibility(View.GONE);
+                        blockCallsBtn.setVisibility(View.VISIBLE);
+                        logo.setBackgroundResource(R.drawable.logo_disabled);
                         break;
                     case ControlService.STATE_UNBLOCK_CALLS:
+                        Log.d(TAG, "Logo - block calls");
                         sendMessageToService(ControlService.MSG_BLOCK_CALLS);
+                        //updateUI(ControlService.STATE_BLOCK_CALLS);
+                        unblockCallsBtn.setVisibility(View.VISIBLE);
+                        blockCallsBtn.setVisibility(View.GONE);
+                        logo.setBackgroundResource(R.drawable.logo_enabled);
                         break;
                     case ControlService.STATE_PAUSE_BLOCK_CALLS:
+                        Log.d(TAG, "Logo - block calls from pause");
                         sendMessageToService(ControlService.MSG_BLOCK_CALLS);
+                        //updateUI(ControlService.STATE_BLOCK_CALLS);
+                        unblockCallsBtn.setVisibility(View.VISIBLE);
+                        blockCallsBtn.setVisibility(View.GONE);
+                        logo.setBackgroundResource(R.drawable.logo_enabled);
                         break;
                 }
             }
@@ -120,7 +131,7 @@ public class ActivityMain extends AppCompatActivity {
         // class name because there is no reason to be able to let other
         // applications replace our component.
         bindService(new Intent(this,
-                ControlService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
+                ControlService.class), mServiceConnection, Context.BIND_WAIVE_PRIORITY);
         mIsBound = true;
     }
 
@@ -135,11 +146,11 @@ public class ActivityMain extends AppCompatActivity {
 
     void sendMessageToService (Integer m) {
         Log.d(TAG, "sendMessageToService: " + Integer.toString(m));
-        if (mService != null) {
+        if (toServiceMessenger != null) {
             try {
                 Message msg = Message.obtain(null, m);
                 msg.replyTo = mMessenger;
-                mService.send(msg);
+                toServiceMessenger.send(msg);
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
@@ -156,27 +167,7 @@ public class ActivityMain extends AppCompatActivity {
                 // interact with the service.  We are communicating with our
                 // service through an IDL interface, so get a client-side
                 // representation of that from the raw service object.
-                mService = new Messenger(service);
-                mCallbackText.setText("Attached.");
-
-                // We want to monitor the service for as long as we are
-                // connected to it.
-                try {
-                    Message msg = Message.obtain(null,
-                            ControlService.MSG_BLOCK_CALLS);
-                    msg.replyTo = mMessenger;
-                    mService.send(msg);
-
-                    msg = Message.obtain(null,
-                            ControlService.MSG_KILL_CONTROL_SERVICE, this.hashCode(), 0);
-                    mService.send(msg);
-                } catch (RemoteException e) {
-                    // In this case the service has crashed before we could even
-                    // do anything with it; we can count on soon being
-                    // disconnected (and then reconnected if it can be restarted)
-                    // so there is no need to do anything here.
-                }
-
+                toServiceMessenger = new Messenger(service);
                 // As part of the sample, tell the user what happened.
                 Log.d(TAG, "onServiceConnected");
             }
@@ -184,9 +175,7 @@ public class ActivityMain extends AppCompatActivity {
             public void onServiceDisconnected(ComponentName className) {
                 // This is called when the connection with the service has been
                 // unexpectedly disconnected -- that is, its process crashed.
-                mService = null;
-                mCallbackText.setText("Disconnected.");
-
+                toServiceMessenger = null;
                 // As part of the sample, tell the user what happened.
                 Log.d(TAG, "onServiceDisconnected");
             }
@@ -194,6 +183,51 @@ public class ActivityMain extends AppCompatActivity {
     }
 
     void getControlServiceState () {
+        Log.d(TAG, "getControlServiceState");
         sendMessageToService(ControlService.MSG_GET_STATE);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.d(TAG, "onDestroy");
+        doUnbindService();
+    }
+
+    private void checkAndRunService(Class<?> serviceClass) {
+        Log.d(TAG, "checkAndRunService");
+        Boolean serviceFound = false;
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                Log.d(TAG, "checkAndRunService: " + "service found.");
+                serviceFound = true;
+            }
+        }
+        if (!serviceFound) {
+            Log.d(TAG, "checkAndRunService: " + "service not found, lets create.");
+            startService(new Intent(ActivityMain.this, serviceClass));
+            initiateConnection();
+            doBindService();
+        }
+    }
+
+    private void updateUI (Integer state) {
+        Log.d(TAG, "updateUI to state " + Integer.toString(state));
+        switch (state) {
+            case ControlService.STATE_BLOCK_CALLS:
+                unblockCallsBtn.setVisibility(View.VISIBLE);
+                blockCallsBtn.setVisibility(View.GONE);
+                logo.setBackgroundResource(R.drawable.logo_enabled);
+            case ControlService.STATE_UNBLOCK_CALLS:
+                unblockCallsBtn.setVisibility(View.GONE);
+                blockCallsBtn.setVisibility(View.VISIBLE);
+                logo.setBackgroundResource(R.drawable.logo_disabled);
+            case ControlService.STATE_PAUSE_BLOCK_CALLS:
+                unblockCallsBtn.setVisibility(View.GONE);
+                blockCallsBtn.setVisibility(View.VISIBLE);
+                logo.setBackgroundResource(R.drawable.logo_disabled);
+        }
+        mainLayout.invalidate();
     }
 }

@@ -6,7 +6,6 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Binder;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -41,21 +40,12 @@ public class ControlService extends Service {
 
     private PhoneStateListener mPhoneStateListener;
     private ServiceHandler mServiceHandler;
-    private Looper mServiceLooper;
     private int mCurrentState;
     private TelephonyManager mTelephonyManager;
     ITelephony mTelephonyService = null;
     private NotificationManager mNotificationManager;
     private Messenger mMessenger;
-
-    public class LocalBinder extends Binder {
-        ControlService getService() {
-            return ControlService.this;
-        }
-    }
-
-    private final IBinder mBinder = new LocalBinder();
-
+    private Messenger toActivityMessenger;
 
     // Handler that receives messages from the thread
     private final class ServiceHandler extends Handler {
@@ -67,8 +57,9 @@ public class ControlService extends Service {
 
         @Override
         public void handleMessage(Message msg) {
-            Log.d(TAG, "handleMessage: " + Integer.toString(msg.arg1));
-            switch (msg.arg1) {
+            Log.d(TAG, "handleMessage: " + Integer.toString(msg.what));
+            toActivityMessenger = msg.replyTo;
+            switch (msg.what) {
                 case MSG_BLOCK_CALLS:
                     mCurrentState = STATE_BLOCK_CALLS;
                     break;
@@ -79,20 +70,28 @@ public class ControlService extends Service {
                     mCurrentState = STATE_PAUSE_BLOCK_CALLS;
                     break;
                 case MSG_KILL_CONTROL_SERVICE:
-                    onDestroy();
+                    Log.d(TAG, "stopSelf");
+                    ControlService.this.stopSelf();
                     break;
                 case MSG_GET_STATE:
-                    msg.replyTo = mMessenger;  // set the handler of the reply activity.
-                    msg.arg1 = mCurrentState;  // if any additional data available put to a bundle
-                    mServiceHandler.sendMessage(msg);
+                    Log.d(TAG, "returning current state");
+                    if (toActivityMessenger != null) {
+                        Message stateMsg = Message.obtain(mServiceHandler, MSG_GET_STATE);
+                        stateMsg.arg1 = mCurrentState;
+                        stateMsg.replyTo = mMessenger;
+
+                        try {
+                            if( toActivityMessenger != null )
+                                toActivityMessenger.send(stateMsg);
+                        }
+                        catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
                     break;
                 default:
                     break;
             }
-
-            // Stop the service using the startId, so that we don't stop
-            // the service in the middle of handling another job
-            stopSelf(msg.arg1);
         }
     }
 
@@ -108,21 +107,19 @@ public class ControlService extends Service {
         thread.start();
 
         // Get the HandlerThread's Looper and use it for our Handler
-        mServiceLooper = thread.getLooper();
-        mServiceHandler = new ServiceHandler(mServiceLooper);
+        mServiceHandler = new ServiceHandler(thread.getLooper());
         mMessenger = new Messenger(mServiceHandler);
         mNotificationManager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 
-        mPhoneStateListener = new ControlPhoneStateListener();
         mTelephonyManager = (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
         initiateTelephonyService();
-
-        showNotification();
+        mPhoneStateListener = new ControlPhoneStateListener();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "onStartCommand");
+        showNotification();
         // If we get killed, after returning from here, restart
         return START_STICKY;
     }
@@ -136,10 +133,12 @@ public class ControlService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-        return mBinder;
+        Log.d(TAG, "onBind");
+        return mMessenger.getBinder();
     }
 
     private void initiateTelephonyService() {
+        Log.d(TAG, "initiateTelephonyService");
         Class c = null;
         try {
             c = Class.forName(mTelephonyManager.getClass().getName());
@@ -170,16 +169,15 @@ public class ControlService extends Service {
         @Override
         public void onCallStateChanged(int state, String incomingNumber) {
             super.onCallStateChanged(state, incomingNumber);
-
+            Log.d(TAG, "onCallStateChanged");
             if (state == TelephonyManager.CALL_STATE_RINGING) {
+                Log.d(TAG, "onCallStateChanged: " + "phone is ringing.");
                 if (mCurrentState == MSG_BLOCK_CALLS) {
                     try {
                         mTelephonyService.endCall();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                } else {
-                    //nothing
                 }
             }
         }
@@ -203,6 +201,7 @@ public class ControlService extends Service {
                 .setContentIntent(contentIntent)  // The intent to send when the entry is clicked
                 .setPriority(Notification.PRIORITY_MAX)
                 .build();
+        notification.flags = Notification.FLAG_ONGOING_EVENT;
 
         // Send the notification.
         mNotificationManager.notify(NOTIFICATION, notification);
