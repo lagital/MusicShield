@@ -2,6 +2,7 @@
     package="musicshield.agita.team.com.musicshield">
 
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+    <uses-permission android:name="android.permission.CALL_PHONE"/>
 
     <application
         android:allowBackup="true"

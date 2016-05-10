@@ -207,9 +207,9 @@ public class ActivityMain extends AppCompatActivity {
         if (!serviceFound) {
             Log.d(TAG, "checkAndRunService: " + "service not found, lets create.");
             startService(new Intent(ActivityMain.this, serviceClass));
-            initiateConnection();
-            doBindService();
         }
+        initiateConnection();
+        doBindService();
     }
 
     private void updateUI (Integer state) {

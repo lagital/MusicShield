@@ -16,7 +16,6 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.Process;
 import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.TaskStackBuilder;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -119,8 +118,8 @@ public class ControlService extends Service {
 
         mTelephonyManager = (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
         initiateTelephonyService();
-        mPhoneStateListener = new ControlPhoneStateListener(this);
-        mTelephonyManager.listen(mPhoneStateListener, TelephonyManager.CALL_STATE_RINGING);
+        mPhoneStateListener = new ControlPhoneStateListener();
+        mTelephonyManager.listen(new ControlPhoneStateListener(), mPhoneStateListener.LISTEN_CALL_STATE);
         mAudioManager = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
     }
 
@@ -174,34 +173,67 @@ public class ControlService extends Service {
 
     private class ControlPhoneStateListener extends PhoneStateListener {
 
-        private Context mContext;
-
-        ControlPhoneStateListener (Context context) {
-            mContext = context;
-        }
+        private boolean wasRinging;
+        private boolean wasAnswered = false;
+        //private boolean muted;
 
         @Override
         public void onCallStateChanged(int state, String incomingNumber) {
             super.onCallStateChanged(state, incomingNumber);
             Log.d(TAG, "onCallStateChanged");
-            if (state == TelephonyManager.CALL_STATE_RINGING) {
-                Log.d(TAG, "onCallStateChanged: " + "phone is ringing.");
-                if (mCurrentState == MSG_BLOCK_CALLS && mAudioManager.isMusicActive()) {
-                    Log.d(TAG, "onCallStateChanged: " + "lets block the call.");
-                    try {
-                        //audioManager.setRingerMode(AudioManager.RINGER_MODE_SILENT);
-                        // Change the stream to your stream of choice.
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
-                            mAudioManager.adjustStreamVolume(AudioManager.STREAM_RING, AudioManager.ADJUST_MUTE, 0);
+            switch(state) {
+                case TelephonyManager.CALL_STATE_RINGING:
+                    Log.d(TAG, "onCallStateChanged: RINGING");
+                    wasRinging = true;
+                    if (mAudioManager.isMusicActive()) {
+                        Log.d(TAG, "onCallStateChanged: " + "music is playing.");
+                        if (mCurrentState == MSG_BLOCK_CALLS) {
+                            Log.d(TAG, "onCallStateChanged: " + "state - blocking.");
+                            try {
+                                //audioManager.setRingerMode(AudioManager.RINGER_MODE_SILENT);
+                                // Change the stream to your stream of choice.
+                                /*
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                    mAudioManager.adjustStreamVolume(AudioManager.STREAM_RING, AudioManager.ADJUST_MUTE, 0);
+                                } else {
+                                    mAudioManager.setStreamMute(AudioManager.STREAM_RING, true);
+                                }
+                                muted = true;
+                                */
+                                mTelephonyService.endCall();
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
                         } else {
-                            mAudioManager.setStreamMute(AudioManager.STREAM_RING, true);
+                            Log.d(TAG, "onCallStateChanged: " + "state - non-blocking.");
                         }
-                        //mTelephonyService.endCall();
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                    } else {
+                        Log.d(TAG, "onCallStateChanged: " + "music is not playing.");
                     }
+                    break;
+                case TelephonyManager.CALL_STATE_OFFHOOK:
+                    Log.d(TAG, "onCallStateChanged: OFFHOOK");
+                    wasAnswered = true;
+                    break;
+                case TelephonyManager.CALL_STATE_IDLE:
+                    Log.i(TAG, "onCallStateChanged: IDLE");
+                    /*
+                    if (muted && wasRinging) {
+                        Log.d(TAG, "onCallStateChanged: phone was muted - lets unmute.");
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                            mAudioManager.adjustStreamVolume(AudioManager.STREAM_RING, AudioManager.ADJUST_UNMUTE, 0);
+                        } else {
+                            mAudioManager.setStreamMute(AudioManager.STREAM_RING, false);
+                        }
+                        muted = false;
+                    }*/
+                    if (!wasAnswered) {
+                        //TODO: notification about missed call
+                    }
+                    wasAnswered = false;
+                    wasRinging = false;
+                    break;
                 }
-            }
         }
     }
 
