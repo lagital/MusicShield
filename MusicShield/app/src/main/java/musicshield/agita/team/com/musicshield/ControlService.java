@@ -6,6 +6,8 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.media.AudioManager;
+import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -49,6 +51,7 @@ public class ControlService extends Service {
     private NotificationManager mNotificationManager;
     private Messenger mMessenger;
     private Messenger toActivityMessenger;
+    private AudioManager mAudioManager;
 
     // Handler that receives messages from the thread
     private final class ServiceHandler extends Handler {
@@ -116,7 +119,9 @@ public class ControlService extends Service {
 
         mTelephonyManager = (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
         initiateTelephonyService();
-        mPhoneStateListener = new ControlPhoneStateListener();
+        mPhoneStateListener = new ControlPhoneStateListener(this);
+        mTelephonyManager.listen(mPhoneStateListener, TelephonyManager.CALL_STATE_RINGING);
+        mAudioManager = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
     }
 
     @Override
@@ -169,15 +174,29 @@ public class ControlService extends Service {
 
     private class ControlPhoneStateListener extends PhoneStateListener {
 
+        private Context mContext;
+
+        ControlPhoneStateListener (Context context) {
+            mContext = context;
+        }
+
         @Override
         public void onCallStateChanged(int state, String incomingNumber) {
             super.onCallStateChanged(state, incomingNumber);
             Log.d(TAG, "onCallStateChanged");
             if (state == TelephonyManager.CALL_STATE_RINGING) {
                 Log.d(TAG, "onCallStateChanged: " + "phone is ringing.");
-                if (mCurrentState == MSG_BLOCK_CALLS) {
+                if (mCurrentState == MSG_BLOCK_CALLS && mAudioManager.isMusicActive()) {
+                    Log.d(TAG, "onCallStateChanged: " + "lets block the call.");
                     try {
-                        mTelephonyService.endCall();
+                        //audioManager.setRingerMode(AudioManager.RINGER_MODE_SILENT);
+                        // Change the stream to your stream of choice.
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+                            mAudioManager.adjustStreamVolume(AudioManager.STREAM_RING, AudioManager.ADJUST_MUTE, 0);
+                        } else {
+                            mAudioManager.setStreamMute(AudioManager.STREAM_RING, true);
+                        }
+                        //mTelephonyService.endCall();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
