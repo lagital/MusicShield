@@ -6,8 +6,9 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.AudioManager;
-import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -51,6 +52,7 @@ public class ControlService extends Service {
     private Messenger mMessenger;
     private Messenger toActivityMessenger;
     private AudioManager mAudioManager;
+    public Integer missedCallsCounter = 0;
 
     // Handler that receives messages from the thread
     private final class ServiceHandler extends Handler {
@@ -64,39 +66,7 @@ public class ControlService extends Service {
         public void handleMessage(Message msg) {
             Log.d(TAG, "handleMessage: " + Integer.toString(msg.what));
             toActivityMessenger = msg.replyTo;
-            switch (msg.what) {
-                case MSG_BLOCK_CALLS:
-                    mCurrentState = STATE_BLOCK_CALLS;
-                    break;
-                case MSG_UNBLOCK_CALLS:
-                    mCurrentState = STATE_UNBLOCK_CALLS;
-                    break;
-                case MSG_PAUSE_BLOCK_CALLS:
-                    mCurrentState = STATE_PAUSE_BLOCK_CALLS;
-                    break;
-                case MSG_KILL_CONTROL_SERVICE:
-                    Log.d(TAG, "stopSelf");
-                    ControlService.this.stopSelf();
-                    break;
-                case MSG_GET_STATE:
-                    Log.d(TAG, "returning current state");
-                    if (toActivityMessenger != null) {
-                        Message stateMsg = Message.obtain(mServiceHandler, MSG_GET_STATE);
-                        stateMsg.arg1 = mCurrentState;
-                        stateMsg.replyTo = mMessenger;
-
-                        try {
-                            if( toActivityMessenger != null )
-                                toActivityMessenger.send(stateMsg);
-                        }
-                        catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    break;
-                default:
-                    break;
-            }
+            processMessage(msg.what);
         }
     }
 
@@ -126,6 +96,14 @@ public class ControlService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "onStartCommand");
+
+        if (intent != null) {
+            if (intent.hasExtra("MSG")) {
+                Log.d(TAG, "onStartCommand: msg intent recieved");
+                processMessage(intent.getIntExtra("MSG", MSG_UNBLOCK_CALLS));
+            }
+        }
+
         showNotification();
         // If we get killed, after returning from here, restart
         return START_STICKY;
@@ -201,6 +179,8 @@ public class ControlService extends Service {
                                 muted = true;
                                 */
                                 mTelephonyService.endCall();
+                                missedCallsCounter += 1;
+                                showNotification();
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
@@ -241,40 +221,60 @@ public class ControlService extends Service {
      * Show a notification while this service is running.
      */
     private void showNotification() {
-        RemoteViews remoteViews = new RemoteViews(getPackageName(),
-                R.layout.notification);
-        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(
-                this).setSmallIcon(R.drawable.logo_disabled).setContent(
-                remoteViews);
-        // Creates an explicit intent for an Activity in your app
-        Intent toActivityIntent     = new Intent(this, ActivityMain.class);
-        Intent blockCallsIntent     = new Intent(this, ControlService.class);
-        Intent unblockCallsIntent   = new Intent(this, ControlService.class);
-        Intent pauseCallsIntent     = new Intent(this, ControlService.class);
+        NotificationCompat.Builder mBuilder =
+                new NotificationCompat.Builder(this)
+                        .setSmallIcon(R.drawable.man_icon_hi)
+                        .setContentTitle(getResources().getString(R.string.app_name))
+                        .setContentText(getResources().getString(R.string.notification_missed_calls_title)
+                                + ' ' + Integer.toString(missedCallsCounter));
+        Intent resultIntent = new Intent(this, ActivityMain.class);
+        PendingIntent pendingIntent = PendingIntent.getService
+                (this, 579, resultIntent, PendingIntent.FLAG_NO_CREATE);
 
-        blockCallsIntent.putExtra("MSG", ControlService.MSG_BLOCK_CALLS);
-        unblockCallsIntent.putExtra("MSG", ControlService.MSG_UNBLOCK_CALLS);
-        pauseCallsIntent.putExtra("MSG", ControlService.MSG_PAUSE_BLOCK_CALLS);
-
-        /*PendingIntent toActivityPendingIntent = stackBuilder.getPendingIntent(0,
-                PendingIntent.FLAG_UPDATE_CURRENT);*/
-        PendingIntent blockCallsPendingIntent = PendingIntent.getService
-                (this, 579, blockCallsIntent, PendingIntent.FLAG_NO_CREATE);
-        PendingIntent unblockCallsPendingIntent = PendingIntent.getService
-                (this, 579, unblockCallsIntent, PendingIntent.FLAG_NO_CREATE);
-        PendingIntent pauseCallsPendingIntent = PendingIntent.getService
-                (this, 579, pauseCallsIntent, PendingIntent.FLAG_NO_CREATE);
-
-        remoteViews.setOnClickPendingIntent(R.id.notification_block_calls_btn,
-                blockCallsPendingIntent);
-        remoteViews.setOnClickPendingIntent(R.id.notification_unblock_calls_btn,
-                unblockCallsPendingIntent);
-        remoteViews.setOnClickPendingIntent(R.id.notification_pause_calls_blocking_btn,
-                pauseCallsPendingIntent);
-        NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        mBuilder.setContentIntent(pendingIntent);
+        NotificationManager mNotificationManager =
+                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         Notification n = mBuilder.build();
+        n.contentView.setImageViewResource(R.drawable.man_icon_hi, R.drawable.man_icon_hi);
         n.flags = Notification.FLAG_ONGOING_EVENT;
         // mId allows you to update the notification later on.
         mNotificationManager.notify(NOTIFICATION, n);
+    }
+
+    private void processMessage(Integer what) {
+        Log.d(TAG, "processMessage: " + Integer.toString(what));
+        switch (what) {
+            case MSG_BLOCK_CALLS:
+                mCurrentState = STATE_BLOCK_CALLS;
+                break;
+            case MSG_UNBLOCK_CALLS:
+                mCurrentState = STATE_UNBLOCK_CALLS;
+                break;
+            case MSG_PAUSE_BLOCK_CALLS:
+                mCurrentState = STATE_PAUSE_BLOCK_CALLS;
+                break;
+            case MSG_KILL_CONTROL_SERVICE:
+                Log.d(TAG, "stopSelf");
+                ControlService.this.stopSelf();
+                break;
+            case MSG_GET_STATE:
+                Log.d(TAG, "returning current state");
+                if (toActivityMessenger != null) {
+                    Message stateMsg = Message.obtain(mServiceHandler, MSG_GET_STATE);
+                    stateMsg.arg1 = mCurrentState;
+                    stateMsg.replyTo = mMessenger;
+
+                    try {
+                        if( toActivityMessenger != null )
+                            toActivityMessenger.send(stateMsg);
+                    }
+                    catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                break;
+            default:
+                break;
+        }
     }
 }

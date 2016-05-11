@@ -19,7 +19,11 @@
             </intent-filter>
         </activity>
 
-        <service android:name=".ControlService" />
+        <service android:name=".ControlService">
+            <intent-filter>
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </service>
 
     </application>
 
