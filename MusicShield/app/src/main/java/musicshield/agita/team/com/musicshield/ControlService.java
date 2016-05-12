@@ -91,6 +91,8 @@ public class ControlService extends Service {
         mPhoneStateListener = new ControlPhoneStateListener();
         mTelephonyManager.listen(new ControlPhoneStateListener(), mPhoneStateListener.LISTEN_CALL_STATE);
         mAudioManager = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
+
+        mCurrentState = STATE_BLOCK_CALLS;
     }
 
     @Override
@@ -153,7 +155,6 @@ public class ControlService extends Service {
 
         private boolean wasRinging;
         private boolean wasAnswered = false;
-        //private boolean muted;
 
         @Override
         public void onCallStateChanged(int state, String incomingNumber) {
@@ -168,16 +169,6 @@ public class ControlService extends Service {
                         if (mCurrentState == MSG_BLOCK_CALLS) {
                             Log.d(TAG, "onCallStateChanged: " + "state - blocking.");
                             try {
-                                //audioManager.setRingerMode(AudioManager.RINGER_MODE_SILENT);
-                                // Change the stream to your stream of choice.
-                                /*
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                                    mAudioManager.adjustStreamVolume(AudioManager.STREAM_RING, AudioManager.ADJUST_MUTE, 0);
-                                } else {
-                                    mAudioManager.setStreamMute(AudioManager.STREAM_RING, true);
-                                }
-                                muted = true;
-                                */
                                 mTelephonyService.endCall();
                                 missedCallsCounter += 1;
                                 showNotification();
@@ -197,19 +188,6 @@ public class ControlService extends Service {
                     break;
                 case TelephonyManager.CALL_STATE_IDLE:
                     Log.i(TAG, "onCallStateChanged: IDLE");
-                    /*
-                    if (muted && wasRinging) {
-                        Log.d(TAG, "onCallStateChanged: phone was muted - lets unmute.");
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                            mAudioManager.adjustStreamVolume(AudioManager.STREAM_RING, AudioManager.ADJUST_UNMUTE, 0);
-                        } else {
-                            mAudioManager.setStreamMute(AudioManager.STREAM_RING, false);
-                        }
-                        muted = false;
-                    }*/
-                    if (!wasAnswered) {
-                        //TODO: notification about missed call
-                    }
                     wasAnswered = false;
                     wasRinging = false;
                     break;

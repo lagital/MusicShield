@@ -55,7 +55,9 @@ public class ActivityMain extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Log.d(TAG, "onCreate");
 
-        checkAndRunService(ControlService.class);
+        if (!serviceExists(ControlService.class)) {
+            runService(ControlService.class);
+        }
         getControlServiceState();
 
         blockCallsBtn = (Button) findViewById(R.id.block_calls_btn);
@@ -68,12 +70,13 @@ public class ActivityMain extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Log.d(TAG, "Button - block calls");
-                checkAndRunService(ControlService.class);
+                if (!serviceExists(ControlService.class)) {
+                    runService(ControlService.class);
+                }
                 sendMessageToService(ControlService.MSG_BLOCK_CALLS);
                 unblockCallsBtn.setVisibility(View.VISIBLE);
                 blockCallsBtn.setVisibility(View.GONE);
                 logo.setBackgroundResource(R.drawable.logo_enabled);
-                //updateUI(ControlService.STATE_BLOCK_CALLS);
             }
         });
 
@@ -81,25 +84,26 @@ public class ActivityMain extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Log.d(TAG, "Button - unblock calls");
-                checkAndRunService(ControlService.class);
-                sendMessageToService(ControlService.MSG_UNBLOCK_CALLS);
-                unblockCallsBtn.setVisibility(View.GONE);
-                blockCallsBtn.setVisibility(View.VISIBLE);
-                logo.setBackgroundResource(R.drawable.logo_disabled);
-                //updateUI(ControlService.STATE_UNBLOCK_CALLS);
+                if (!serviceExists(ControlService.class)) {
+                    sendMessageToService(ControlService.MSG_KILL_CONTROL_SERVICE);
+                    unblockCallsBtn.setVisibility(View.GONE);
+                    blockCallsBtn.setVisibility(View.VISIBLE);
+                    logo.setBackgroundResource(R.drawable.logo_disabled);
+                }
             }
         });
 
         logo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                checkAndRunService(ControlService.class);
+                if (!serviceExists(ControlService.class)) {
+                    runService(ControlService.class);
+                }
                 getControlServiceState();
                 switch (mCurrentServiceState) {
                     case ControlService.STATE_BLOCK_CALLS:
                         Log.d(TAG, "Logo - unblock calls");
-                        sendMessageToService(ControlService.MSG_UNBLOCK_CALLS);
-                        //updateUI(ControlService.STATE_UNBLOCK_CALLS);
+                        sendMessageToService(ControlService.MSG_KILL_CONTROL_SERVICE);
                         unblockCallsBtn.setVisibility(View.GONE);
                         blockCallsBtn.setVisibility(View.VISIBLE);
                         logo.setBackgroundResource(R.drawable.logo_disabled);
@@ -107,7 +111,6 @@ public class ActivityMain extends AppCompatActivity {
                     case ControlService.STATE_UNBLOCK_CALLS:
                         Log.d(TAG, "Logo - block calls");
                         sendMessageToService(ControlService.MSG_BLOCK_CALLS);
-                        //updateUI(ControlService.STATE_BLOCK_CALLS);
                         unblockCallsBtn.setVisibility(View.VISIBLE);
                         blockCallsBtn.setVisibility(View.GONE);
                         logo.setBackgroundResource(R.drawable.logo_enabled);
@@ -115,7 +118,6 @@ public class ActivityMain extends AppCompatActivity {
                     case ControlService.STATE_PAUSE_BLOCK_CALLS:
                         Log.d(TAG, "Logo - block calls from pause");
                         sendMessageToService(ControlService.MSG_BLOCK_CALLS);
-                        //updateUI(ControlService.STATE_BLOCK_CALLS);
                         unblockCallsBtn.setVisibility(View.VISIBLE);
                         blockCallsBtn.setVisibility(View.GONE);
                         logo.setBackgroundResource(R.drawable.logo_enabled);
@@ -194,20 +196,20 @@ public class ActivityMain extends AppCompatActivity {
         doUnbindService();
     }
 
-    private void checkAndRunService(Class<?> serviceClass) {
+    private boolean serviceExists(Class<?> serviceClass) {
         Log.d(TAG, "checkAndRunService");
-        Boolean serviceFound = false;
         ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
         for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
             if (serviceClass.getName().equals(service.service.getClassName())) {
                 Log.d(TAG, "checkAndRunService: " + "service found.");
-                serviceFound = true;
+                return true;
             }
         }
-        if (!serviceFound) {
-            Log.d(TAG, "checkAndRunService: " + "service not found, lets create.");
-            startService(new Intent(ActivityMain.this, serviceClass));
-        }
+        return false;
+    }
+
+    private void runService(Class<?> serviceClass) {
+        startService(new Intent(ActivityMain.this, serviceClass));
         initiateConnection();
         doBindService();
     }
