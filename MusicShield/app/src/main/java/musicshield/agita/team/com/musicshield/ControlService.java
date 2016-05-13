@@ -6,8 +6,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.database.sqlite.SQLiteDatabase;
 import android.media.AudioManager;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -20,11 +19,12 @@ import android.support.v4.app.NotificationCompat;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
-import android.widget.RemoteViews;
 
 import com.android.internal.telephony.ITelephony;
 
 import java.lang.reflect.Method;
+import java.text.DateFormat;
+import java.util.Date;
 
 /**
  * Created by pborisenko on 5/8/2016.
@@ -53,6 +53,7 @@ public class ControlService extends Service {
     private Messenger toActivityMessenger;
     private AudioManager mAudioManager;
     public Integer missedCallsCounter = 0;
+    private DBHelper mDBHelper;
 
     // Handler that receives messages from the thread
     private final class ServiceHandler extends Handler {
@@ -85,6 +86,8 @@ public class ControlService extends Service {
         mServiceHandler = new ServiceHandler(thread.getLooper());
         mMessenger = new Messenger(mServiceHandler);
         mNotificationManager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+
+        mDBHelper = new DBHelper(this);
 
         mTelephonyManager = (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
         initiateTelephonyService();
@@ -171,9 +174,15 @@ public class ControlService extends Service {
                             try {
                                 mTelephonyService.endCall();
                                 missedCallsCounter += 1;
+                                String date_time = DateFormat.getDateTimeInstance().format(new Date());
+                                mDBHelper.insertMissedCall(ApplicationMain.WRITE_DB, incomingNumber, date_time,
+                                        DBHelper.CallType.BLOCKED);
                                 showNotification();
+                                Log.d(TAG, "onCallStateChanged: " + "blocked " + incomingNumber
+                                + " on " + date_time);
                             } catch (Exception e) {
                                 e.printStackTrace();
+                                break;
                             }
                         } else {
                             Log.d(TAG, "onCallStateChanged: " + "state - non-blocking.");
@@ -205,7 +214,7 @@ public class ControlService extends Service {
                         .setContentTitle(getResources().getString(R.string.app_name))
                         .setContentText(getResources().getString(R.string.notification_missed_calls_title)
                                 + ' ' + Integer.toString(missedCallsCounter));
-        Intent resultIntent = new Intent(this, ActivityMain.class);
+        Intent resultIntent = new Intent(this, FragmentMain.class);
         PendingIntent pendingIntent = PendingIntent.getService
                 (this, 579, resultIntent, PendingIntent.FLAG_NO_CREATE);
 

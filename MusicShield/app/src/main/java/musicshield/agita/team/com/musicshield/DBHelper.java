@@ -2,17 +2,19 @@ package musicshield.agita.team.com.musicshield;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
+import android.util.Log;
 
-import java.sql.Time;
-import java.util.Date;
+import java.util.ArrayList;
 
 /**
  * Created by pborisenko on 5/13/2016.
  */
 public class DBHelper extends SQLiteOpenHelper {
+    private static final String TAG = "DBHelper";
     // If you change the database schema, you must increment the database version.
     public static final int DATABASE_VERSION = 1;
     public static final String DATABASE_NAME = "MusicShield.db";
@@ -23,9 +25,9 @@ public class DBHelper extends SQLiteOpenHelper {
     private static final String SQL_CREATE_TABLES =
             "CREATE TABLE " + CallColumns.TABLE_NAME + " (" +
                     CallColumns._ID + " INTEGER PRIMARY KEY," +
-                    CallColumns.COL_CALL_NUMBER + INT_TYPE + SEP +
-                    CallColumns.COL_CALL_DATE + TEXT_TYPE + SEP +
-                    CallColumns.COL_CALL_TIME + INT_TYPE + SEP +
+                    CallColumns.COL_CALL_NUMBER + TEXT_TYPE + SEP +
+                    CallColumns.COL_CALL_TIME + TEXT_TYPE + SEP +
+                    CallColumns.COL_CALL_STATUS + INT_TYPE + SEP +
             " )";
 
     private static final String SQL_DELETE_ENTRIES =
@@ -33,36 +35,99 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public DBHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        Log.d(TAG, "Constructor");
     }
     public void onCreate(SQLiteDatabase db) {
+        Log.d(TAG, "onCreate");
         db.execSQL(SQL_CREATE_TABLES);
     }
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         // This database is only a cache for online data, so its upgrade policy is
         // to simply to discard the data and start over
+        Log.d(TAG, "onUpgrade");
         db.execSQL(SQL_DELETE_ENTRIES);
         onCreate(db);
     }
     public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        Log.d(TAG, "onDowngrade");
         onUpgrade(db, oldVersion, newVersion);
     }
 
     private static abstract class CallColumns implements BaseColumns {
         public static final String TABLE_NAME = "missed_call";
         public static final String COL_CALL_NUMBER = "number";
-        public static final String COL_CALL_DATE = "date";
-        public static final String COL_CALL_TIME = "time";
+        public static final String COL_CALL_TIME = "date_time";
+        public static final String COL_CALL_STATUS = "status";
     }
 
-    // API
-    public long insertCall (SQLiteDatabase db, Integer number, Date date, Time time) {
+    private Integer callTypeToInt (CallType type) {
+        Log.d(TAG, "callTypeToInt");
+        switch (type) {
+            case ANSWERED: return 1;
+            case MISSED:   return 0;
+            case BLOCKED:  return -1;
+            default: return 0;
+        }
+    }
+
+    private CallType intToCallType (Integer intg) {
+        Log.d(TAG, "intToCallType");
+        switch (intg) {
+            case 1: return CallType.ANSWERED;
+            case 0: return CallType.MISSED;
+            case -1:return CallType.BLOCKED;
+            default: return CallType.MISSED;
+        }
+    }
+
+    /*-----------API-----------*/
+
+    public long insertMissedCall (SQLiteDatabase db, String number, String dateTime, CallType type) {
+        Log.d(TAG, "insertMissedCall: " + number);
         // Create a new map of values, where column names are the keys
         ContentValues values = new ContentValues();
         values.put(CallColumns.COL_CALL_NUMBER, number);
-        values.put(CallColumns.COL_CALL_DATE, date.toString());
-        values.put(CallColumns.COL_CALL_TIME, time.getTime());
+        values.put(CallColumns.COL_CALL_TIME, dateTime);
+        values.put(CallColumns.COL_CALL_STATUS, callTypeToInt(type));
 
         // Insert the new row, returning the primary key value of the new row
         return db.insert(CallColumns.TABLE_NAME, null, values);
     }
+
+    public void clearMissedCalls (SQLiteDatabase db) {
+        Log.d(TAG, "clearMissedCalls");
+        // Define 'where' part of query.
+        String condition = "1 = ?";
+        // Specify arguments in placeholder order.
+        String[] conditionArgs = { "1" };
+        // Issue SQL statement.
+        db.delete(CallColumns.TABLE_NAME, condition, conditionArgs);
+    }
+
+    public ArrayList<Call> retrieveMissedCalls (SQLiteDatabase db) {
+        Log.d(TAG, "retrieveMissedCalls");
+        ArrayList<Call> calls = new ArrayList<Call>();
+        Cursor cursor = db.rawQuery("SELECT * FROM " + CallColumns.TABLE_NAME,null);
+
+        if (cursor .moveToFirst()) {
+            while (!cursor.isAfterLast()) {
+                calls.add(new Call(
+                        cursor.getString(cursor.getColumnIndex(CallColumns.COL_CALL_NUMBER)),
+                        cursor.getString(cursor.getColumnIndex(CallColumns.COL_CALL_TIME)),
+                        intToCallType(cursor.getInt(cursor.getColumnIndex(CallColumns.COL_CALL_STATUS)))
+                ));
+                cursor.moveToNext();
+            }
+        }
+        cursor.close();
+        return calls;
+    }
+
+    public enum CallType {
+        ANSWERED,
+        MISSED,
+        BLOCKED
+    }
+
+    /*-----------API-----------*/
 }
