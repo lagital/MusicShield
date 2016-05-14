@@ -19,15 +19,15 @@ public class DBHelper extends SQLiteOpenHelper {
     public static final int DATABASE_VERSION = 1;
     public static final String DATABASE_NAME = "MusicShield.db";
 
-    private static final String TEXT_TYPE = "TEXT";
-    private static final String INT_TYPE = "INTEGER";
+    private static final String TEXT_TYPE = " TEXT";
+    private static final String INT_TYPE = " INTEGER";
     private static final String SEP = ",";
     private static final String SQL_CREATE_TABLES =
             "CREATE TABLE " + CallColumns.TABLE_NAME + " (" +
                     CallColumns._ID + " INTEGER PRIMARY KEY," +
                     CallColumns.COL_CALL_NUMBER + TEXT_TYPE + SEP +
                     CallColumns.COL_CALL_TIME + TEXT_TYPE + SEP +
-                    CallColumns.COL_CALL_STATUS + INT_TYPE + SEP +
+                    CallColumns.COL_CALL_STATUS + INT_TYPE +
             " )";
 
     private static final String SQL_DELETE_ENTRIES =
@@ -130,4 +130,21 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     /*-----------API-----------*/
+    /*-------Debug API --------*/
+
+    public void debugInsertMissedCall (SQLiteDatabase db, String number, String dateTime, CallType type) {
+        Log.d(TAG, "debugInsertMissedCall: " + number);
+        if (BuildConfig.DEBUG) {
+            // Create a new map of values, where column names are the keys
+            ContentValues values = new ContentValues();
+            values.put(CallColumns.COL_CALL_NUMBER, number);
+            values.put(CallColumns.COL_CALL_TIME, dateTime);
+            values.put(CallColumns.COL_CALL_STATUS, callTypeToInt(type));
+
+            // Insert the new row, returning the primary key value of the new row
+            db.insert(CallColumns.TABLE_NAME, null, values);
+        }
+    }
+
+    /*-------Debug API --------*/
 }

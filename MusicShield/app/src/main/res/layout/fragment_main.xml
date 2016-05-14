@@ -3,13 +3,12 @@
     android:id="@+id/main_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/blue_grey_700"
+    android:background="@color/activity_background_color"
     android:orientation="vertical"
     android:weightSum="4"
-    tools:context=".legacy.ActivityMain">
+    tools:context="ActivityMain$FragmentMain">
 
     <LinearLayout
-
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="3"
@@ -22,7 +21,6 @@
             android:layout_gravity="center"
             android:src="@drawable/logo_disabled"
             android:id="@+id/logo"/>
-
     </LinearLayout>
 
 
@@ -30,7 +28,7 @@
         android:layout_width="fill_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="@color/blue_grey_900">
+        android:background="@color/activity_background_color">
 
         <LinearLayout
             android:id="@+id/menu"

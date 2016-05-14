@@ -3,4 +3,12 @@
     <color name="blue_grey_900">#263238</color>
     <color name="blue_grey_700">#455A64</color>
     <color name="blue_grey_500">#607D8B</color>
+
+    <color name="missed_call_card">#FFF3E0</color>
+    <color name="activity_background_color">#FAFAFA</color>
+
+    <!--Text-->
+    <color name="toolbar">#424242</color>
+    <color name="primary_text">#57000000</color>
+    <color name="secondary_text">#36000000</color>
 </resources>
