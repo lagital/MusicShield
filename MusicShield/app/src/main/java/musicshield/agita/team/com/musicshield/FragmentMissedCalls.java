@@ -1,19 +1,19 @@
 package musicshield.agita.team.com.musicshield;
 
-
-import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
 
 import java.util.ArrayList;
 
@@ -30,6 +30,7 @@ public class FragmentMissedCalls extends Fragment {
     private LinearLayoutManager mLayoutManager;
     private DBHelper mDBHelper;
     private ArrayList<Call> mDataset;
+    private AdView mAdView;
 
     public static FragmentMissedCalls newInstance(int sectionNumber) {
         FragmentMissedCalls fragment = new FragmentMissedCalls();
@@ -48,19 +49,27 @@ public class FragmentMissedCalls extends Fragment {
         Log.d(TAG, "onCreateView");
 
         mRecyclerView = (RecyclerView) rootView.findViewById(R.id.recycler_view);
-
         mDBHelper = new DBHelper(getActivity());
 
         // use this setting to improve performance if you know that changes
         // in content do not change the layout size of the RecyclerView
         mRecyclerView.setHasFixedSize(true);
 
+        mAdView = (AdView) rootView.findViewById(R.id.adView);
+        AdRequest adRequest = new AdRequest.Builder().build();
+        mAdView.loadAd(adRequest);
+
         // use a linear layout manager
         mLayoutManager = new LinearLayoutManager(getActivity());
         mRecyclerView.setLayoutManager(mLayoutManager);
 
-        mDBHelper.debugInsertMissedCall(ApplicationMain.WRITE_DB, "test", "test", DBHelper.CallType.BLOCKED);
-        mDataset = mDBHelper.retrieveMissedCalls(ApplicationMain.READ_DB);
+        mDBHelper.debugInsertMissedCall(ApplicationMain.WRITE_DB, "TEST", "test", DBHelper.CallType.BLOCKED);
+        mDataset = new ArrayList<Call>();
+        try {
+            mDataset = mDBHelper.retrieveMissedCalls(ApplicationMain.READ_DB);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         // specify an adapter (see also next example)
         mAdapter = new MissedCallsAdapter(mDataset);

@@ -7,6 +7,8 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.AudioManager;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -208,15 +210,18 @@ public class ControlService extends Service {
      * Show a notification while this service is running.
      */
     private void showNotification() {
+        Intent resultIntent = new Intent(this, ActivityMain.class);
+        PendingIntent pendingIntent = PendingIntent.getService
+                (this, NOTIFICATION, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(this)
                         .setSmallIcon(R.drawable.man_icon_hi)
-                        .setContentTitle(getResources().getString(R.string.app_name))
+                        .setLargeIcon(BitmapFactory.decodeResource(getResources(),
+                                R.drawable.logo_enabled))
+                        .setContentTitle(getResources().getString(R.string.notification_title))
+                        .setContentIntent(pendingIntent)
                         .setContentText(getResources().getString(R.string.notification_missed_calls_title)
                                 + ' ' + Integer.toString(missedCallsCounter));
-        Intent resultIntent = new Intent(this, FragmentMain.class);
-        PendingIntent pendingIntent = PendingIntent.getService
-                (this, 579, resultIntent, PendingIntent.FLAG_NO_CREATE);
 
         mBuilder.setContentIntent(pendingIntent);
         NotificationManager mNotificationManager =
@@ -241,27 +246,33 @@ public class ControlService extends Service {
                 mCurrentState = STATE_PAUSE_BLOCK_CALLS;
                 break;
             case MSG_KILL_CONTROL_SERVICE:
+                mCurrentState = STATE_UNBLOCK_CALLS;
+                sendCurrentState ();
                 Log.d(TAG, "stopSelf");
                 ControlService.this.stopSelf();
                 break;
             case MSG_GET_STATE:
-                Log.d(TAG, "returning current state");
-                if (toActivityMessenger != null) {
-                    Message stateMsg = Message.obtain(mServiceHandler, MSG_GET_STATE);
-                    stateMsg.arg1 = mCurrentState;
-                    stateMsg.replyTo = mMessenger;
-
-                    try {
-                        if( toActivityMessenger != null )
-                            toActivityMessenger.send(stateMsg);
-                    }
-                    catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
+                sendCurrentState();
                 break;
             default:
                 break;
+        }
+    }
+
+    private void sendCurrentState () {
+        Log.d(TAG, "returning current state");
+        if (toActivityMessenger != null) {
+            Message stateMsg = Message.obtain(mServiceHandler, MSG_GET_STATE);
+            stateMsg.arg1 = mCurrentState;
+            stateMsg.replyTo = mMessenger;
+
+            try {
+                if( toActivityMessenger != null )
+                    toActivityMessenger.send(stateMsg);
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 }

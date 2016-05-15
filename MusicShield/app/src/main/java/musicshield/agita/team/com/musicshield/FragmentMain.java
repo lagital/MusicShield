@@ -34,7 +34,7 @@ public class FragmentMain extends Fragment {
     private ImageView logo;
     private LinearLayout mainLayout;
     private ServiceConnection mServiceConnection;
-    final Messenger mMessenger = new Messenger(new IncomingHandler());
+    private Messenger mMessenger = new Messenger(new IncomingHandler());
     /** Messenger for communicating with service. */
     Messenger toServiceMessenger;
     private Integer mCurrentServiceState = ControlService.STATE_UNBLOCK_CALLS;
@@ -45,10 +45,13 @@ public class FragmentMain extends Fragment {
      * Handler of incoming messages from service.
      */
     class IncomingHandler extends Handler {
+
         @Override
         public void handleMessage(Message msg) {
             Log.d(TAG, "Message handled: " + Integer.toString(msg.arg1));
             mCurrentServiceState = msg.arg1;
+            // TODO: working
+            updateUI();
         }
     }
 
@@ -68,16 +71,20 @@ public class FragmentMain extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
         Log.d(TAG, "onCreateView");
 
-        if (!serviceExists(ControlService.class)) {
-            runService(ControlService.class);
-        }
-        getControlServiceState();
-
         blockCallsBtn = (Button) rootView.findViewById(R.id.block_calls_btn);
         unblockCallsBtn = (Button) rootView.findViewById(R.id.unblock_calls_btn);
         logo = (ImageView) rootView.findViewById(R.id.logo);
         mainLayout = (LinearLayout) rootView.findViewById(R.id.main_layout);
-        updateUI(mCurrentServiceState);
+
+        if (serviceExists(ControlService.class)) {
+            blockCallsBtn.setVisibility(View.GONE);
+            logo.setImageResource(R.drawable.logo_enabled);
+            initiateConnection();
+            doBindService();
+        } else {
+            unblockCallsBtn.setVisibility(View.GONE);
+            logo.setImageResource(R.drawable.logo_disabled);
+        }
 
         blockCallsBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -85,11 +92,12 @@ public class FragmentMain extends Fragment {
                 Log.d(TAG, "Button - block calls");
                 if (!serviceExists(ControlService.class)) {
                     runService(ControlService.class);
+                    mCurrentServiceState = ControlService.STATE_BLOCK_CALLS;
                 }
-                sendMessageToService(ControlService.MSG_BLOCK_CALLS);
+                //sendMessageToService(ControlService.MSG_BLOCK_CALLS);
                 unblockCallsBtn.setVisibility(View.VISIBLE);
                 blockCallsBtn.setVisibility(View.GONE);
-                logo.setBackgroundResource(R.drawable.logo_enabled);
+                logo.setImageResource(R.drawable.logo_enabled);
             }
         });
 
@@ -97,43 +105,45 @@ public class FragmentMain extends Fragment {
             @Override
             public void onClick(View v) {
                 Log.d(TAG, "Button - unblock calls");
-                if (!serviceExists(ControlService.class)) {
+                if (serviceExists(ControlService.class)) {
                     sendMessageToService(ControlService.MSG_KILL_CONTROL_SERVICE);
-                    unblockCallsBtn.setVisibility(View.GONE);
-                    blockCallsBtn.setVisibility(View.VISIBLE);
-                    logo.setBackgroundResource(R.drawable.logo_disabled);
+                    mCurrentServiceState = ControlService.STATE_UNBLOCK_CALLS;
                 }
+                unblockCallsBtn.setVisibility(View.GONE);
+                blockCallsBtn.setVisibility(View.VISIBLE);
+                logo.setImageResource(R.drawable.logo_disabled);
             }
         });
 
         logo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (!serviceExists(ControlService.class)) {
-                    runService(ControlService.class);
-                }
-                getControlServiceState();
                 switch (mCurrentServiceState) {
                     case ControlService.STATE_BLOCK_CALLS:
-                        Log.d(TAG, "Logo - unblock calls");
+                        Log.d(TAG, "State: " + Integer.toString(mCurrentServiceState) + "Logo - lets unblock calls");
                         sendMessageToService(ControlService.MSG_KILL_CONTROL_SERVICE);
+                        mCurrentServiceState = ControlService.STATE_UNBLOCK_CALLS;
                         unblockCallsBtn.setVisibility(View.GONE);
                         blockCallsBtn.setVisibility(View.VISIBLE);
-                        logo.setBackgroundResource(R.drawable.logo_disabled);
+                        logo.setImageResource(R.drawable.logo_disabled);
                         break;
                     case ControlService.STATE_UNBLOCK_CALLS:
-                        Log.d(TAG, "Logo - block calls");
-                        sendMessageToService(ControlService.MSG_BLOCK_CALLS);
+                        Log.d(TAG, "State: " + Integer.toString(mCurrentServiceState) + "Logo - lets block calls");
+                        if (!serviceExists(ControlService.class)) {
+                            runService(ControlService.class);
+                        }
+                        //sendMessageToService(ControlService.MSG_BLOCK_CALLS);
+                        mCurrentServiceState = ControlService.STATE_BLOCK_CALLS;
                         unblockCallsBtn.setVisibility(View.VISIBLE);
                         blockCallsBtn.setVisibility(View.GONE);
-                        logo.setBackgroundResource(R.drawable.logo_enabled);
+                        logo.setImageResource(R.drawable.logo_enabled);
                         break;
                     case ControlService.STATE_PAUSE_BLOCK_CALLS:
-                        Log.d(TAG, "Logo - block calls from pause");
+                        Log.d(TAG, "State: " + Integer.toString(mCurrentServiceState) + "Logo - lets block calls");
                         sendMessageToService(ControlService.MSG_BLOCK_CALLS);
                         unblockCallsBtn.setVisibility(View.VISIBLE);
                         blockCallsBtn.setVisibility(View.GONE);
-                        logo.setBackgroundResource(R.drawable.logo_enabled);
+                        logo.setImageResource(R.drawable.logo_enabled);
                         break;
                 }
             }
@@ -220,7 +230,7 @@ public class FragmentMain extends Fragment {
     }
 
     private boolean serviceExists(Class<?> serviceClass) {
-        Log.d(TAG, "checkAndRunService");
+        Log.d(TAG, "serviceExists");
         ActivityManager manager = (ActivityManager) getActivity().getSystemService(Context.ACTIVITY_SERVICE);
         for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
             if (serviceClass.getName().equals(service.service.getClassName())) {
@@ -237,22 +247,21 @@ public class FragmentMain extends Fragment {
         doBindService();
     }
 
-    private void updateUI (Integer state) {
-        Log.d(TAG, "updateUI to state " + Integer.toString(state));
-        switch (state) {
+    private void updateUI () {
+        Log.d(TAG, "updateUI to state " + Integer.toString(mCurrentServiceState));
+        switch (mCurrentServiceState) {
             case ControlService.STATE_BLOCK_CALLS:
                 unblockCallsBtn.setVisibility(View.VISIBLE);
                 blockCallsBtn.setVisibility(View.GONE);
-                logo.setBackgroundResource(R.drawable.logo_enabled);
+                logo.setImageResource(R.drawable.logo_enabled);
             case ControlService.STATE_UNBLOCK_CALLS:
                 unblockCallsBtn.setVisibility(View.GONE);
                 blockCallsBtn.setVisibility(View.VISIBLE);
-                logo.setBackgroundResource(R.drawable.logo_disabled);
+                logo.setImageResource(R.drawable.logo_disabled);
             case ControlService.STATE_PAUSE_BLOCK_CALLS:
                 unblockCallsBtn.setVisibility(View.GONE);
                 blockCallsBtn.setVisibility(View.VISIBLE);
-                logo.setBackgroundResource(R.drawable.logo_disabled);
+                logo.setImageResource(R.drawable.logo_disabled);
         }
-        mainLayout.invalidate();
     }
 }

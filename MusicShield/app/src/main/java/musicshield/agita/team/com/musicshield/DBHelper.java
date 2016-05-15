@@ -89,7 +89,6 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put(CallColumns.COL_CALL_NUMBER, number);
         values.put(CallColumns.COL_CALL_TIME, dateTime);
         values.put(CallColumns.COL_CALL_STATUS, callTypeToInt(type));
-
         // Insert the new row, returning the primary key value of the new row
         return db.insert(CallColumns.TABLE_NAME, null, values);
     }
@@ -107,7 +106,7 @@ public class DBHelper extends SQLiteOpenHelper {
     public ArrayList<Call> retrieveMissedCalls (SQLiteDatabase db) {
         Log.d(TAG, "retrieveMissedCalls");
         ArrayList<Call> calls = new ArrayList<Call>();
-        Cursor cursor = db.rawQuery("SELECT * FROM " + CallColumns.TABLE_NAME,null);
+        Cursor cursor = db.rawQuery("SELECT * FROM " + CallColumns.TABLE_NAME + " ORDER BY _ID DESC",null);
 
         if (cursor .moveToFirst()) {
             while (!cursor.isAfterLast()) {
@@ -134,15 +133,19 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public void debugInsertMissedCall (SQLiteDatabase db, String number, String dateTime, CallType type) {
         Log.d(TAG, "debugInsertMissedCall: " + number);
-        if (BuildConfig.DEBUG) {
-            // Create a new map of values, where column names are the keys
-            ContentValues values = new ContentValues();
-            values.put(CallColumns.COL_CALL_NUMBER, number);
-            values.put(CallColumns.COL_CALL_TIME, dateTime);
-            values.put(CallColumns.COL_CALL_STATUS, callTypeToInt(type));
+        try {
+            if (BuildConfig.DEBUG) {
+                // Create a new map of values, where column names are the keys
+                ContentValues values = new ContentValues();
+                values.put(CallColumns.COL_CALL_NUMBER, number);
+                values.put(CallColumns.COL_CALL_TIME, dateTime);
+                values.put(CallColumns.COL_CALL_STATUS, callTypeToInt(type));
 
-            // Insert the new row, returning the primary key value of the new row
-            db.insert(CallColumns.TABLE_NAME, null, values);
+                // Insert the new row, returning the primary key value of the new row
+                db.insert(CallColumns.TABLE_NAME, null, values);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

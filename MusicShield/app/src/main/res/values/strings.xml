@@ -8,11 +8,13 @@
     <!--Notification-->
     <string name="notification_missed_calls_title">Missed calls:</string>
     <string name="update_availability_status_title">Update is available!</string>
-    <string name="title_activity_main2">Main2Activity</string>
     <string name="action_settings">Settings</string>
-    <string name="section_format">Hello World from section: %1$d</string>
+    <string name="notification_title">Blocking enabled</string>
 
     <!--Content Descriptions-->
     <string name="missed_call_icon">Missed Call</string>
     <string name="missed_call_list_rec_view">Missed Calls</string>
+
+    <!--AdMob-->
+    <string name="banner_ad_unit_id">ca-app-pub-3940256099942544/6300978111</string>
 </resources>
