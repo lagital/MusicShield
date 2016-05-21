@@ -1,4 +1,4 @@
-package musicshield.agita.team.com.musicshield;
+package com.samsara.team.apps.musicshield;
 
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;

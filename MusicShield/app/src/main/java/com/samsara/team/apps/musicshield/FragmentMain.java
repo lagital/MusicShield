@@ -1,4 +1,4 @@
-package musicshield.agita.team.com.musicshield;
+package com.samsara.team.apps.musicshield;
 
 import android.app.ActivityManager;
 import android.support.v4.app.Fragment;
@@ -18,7 +18,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 
 /**
  * Created by pborisenko on 5/8/2016.

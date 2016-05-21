@@ -1,4 +1,4 @@
-package musicshield.agita.team.com.musicshield;
+package com.samsara.team.apps.musicshield;
 
 import android.app.Application;
 import android.content.Context;
