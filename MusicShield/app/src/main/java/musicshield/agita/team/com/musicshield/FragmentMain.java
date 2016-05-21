@@ -32,7 +32,6 @@ public class FragmentMain extends Fragment {
     private Button blockCallsBtn;
     private Button unblockCallsBtn;
     private ImageView logo;
-    private LinearLayout mainLayout;
     private ServiceConnection mServiceConnection;
     private Messenger mMessenger = new Messenger(new IncomingHandler());
     /** Messenger for communicating with service. */
@@ -74,7 +73,6 @@ public class FragmentMain extends Fragment {
         blockCallsBtn = (Button) rootView.findViewById(R.id.block_calls_btn);
         unblockCallsBtn = (Button) rootView.findViewById(R.id.unblock_calls_btn);
         logo = (ImageView) rootView.findViewById(R.id.logo);
-        mainLayout = (LinearLayout) rootView.findViewById(R.id.main_layout);
 
         if (serviceExists(ControlService.class)) {
             blockCallsBtn.setVisibility(View.GONE);
@@ -156,9 +154,10 @@ public class FragmentMain extends Fragment {
         super.setUserVisibleHint(isVisibleToUser);
         if (isVisibleToUser) {
             ActivityMain a = (ActivityMain) getActivity();
-            a.showClearMissedCallsBtn(false);
+            a.updateToolbar(0);
         }
     }
+
 
     void doBindService() {
         Log.d(TAG, "doBindService");

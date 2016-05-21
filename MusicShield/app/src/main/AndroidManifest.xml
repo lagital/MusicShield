@@ -7,14 +7,14 @@
     <uses-permission android:name="android.permission.READ_CONTACTS" />
 
     <application
+        android:name=".ApplicationMain"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:name=".ApplicationMain"
         android:theme="@style/AppTheme">
         <activity
-            android:name="musicshield.agita.team.com.musicshield.ActivityMain"
+            android:name=".ActivityMain"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
@@ -23,12 +23,15 @@
                 <action android:name="musicshield.agita.team.com.musicshield.ACTIVITYMAIN" />
             </intent-filter>
         </activity>
-
         <service android:name=".ControlService">
             <intent-filter>
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </service>
+        <activity
+            android:name=".ActivitySettings"
+            android:label="@string/title_activity_activity_settings">
+        </activity>
     </application>
 
 </manifest>

@@ -1,5 +1,7 @@
 package musicshield.agita.team.com.musicshield;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
@@ -22,7 +24,7 @@ import java.util.ArrayList;
  */
 public class FragmentMissedCalls extends Fragment {
 
-    private static final String TAG = "ActivityMain";
+    private static final String TAG = "FragmentMissedCalls";
     private static final String ARG_SECTION_NUMBER = "section_number";
 
     private MissedCallsAdapter mAdapter;
@@ -64,18 +66,22 @@ public class FragmentMissedCalls extends Fragment {
         mRecyclerView.setLayoutManager(mLayoutManager);
 
         mDBHelper.debugInsertMissedCall(ApplicationMain.WRITE_DB, "TEST", "test", DBHelper.CallType.BLOCKED);
-        mDataset = new ArrayList<Call>();
-        try {
-            mDataset = mDBHelper.retrieveMissedCalls(ApplicationMain.READ_DB);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        mDataset = mDBHelper.retrieveMissedCalls(ApplicationMain.READ_DB);
 
         // specify an adapter (see also next example)
         mAdapter = new MissedCallsAdapter(mDataset);
         mRecyclerView.setAdapter(mAdapter);
 
         return rootView;
+    }
+
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        if (isVisibleToUser) {
+            ActivityMain a = (ActivityMain) getActivity();
+            a.updateToolbar(1);
+        }
     }
 
     private class MissedCallsAdapter extends RecyclerView.Adapter<MissedCallsAdapter.ViewHolder> {
@@ -90,12 +96,16 @@ public class FragmentMissedCalls extends Fragment {
             public ImageView mMissedCallIcon;
             public TextView mMissedCallNumname;
             public TextView mMissedCallDateTime;
+            public TextView mCallNumberSecret;
+
             public ViewHolder(View v) {
                 super(v);
                 mView = v;
                 mMissedCallIcon = (ImageView) v.findViewById(R.id.missed_call_icon);
                 mMissedCallNumname = (TextView) v.findViewById(R.id.missed_call_numname);
                 mMissedCallDateTime = (TextView) v.findViewById(R.id.missed_call_date_time);
+                mCallNumberSecret = (TextView) v.findViewById(R.id.missed_call_number_secret);
+                v.setOnClickListener(new OnNumberClickListener());
             }
         }
 
@@ -123,13 +133,42 @@ public class FragmentMissedCalls extends Fragment {
                     ContextCompat.getDrawable(getActivity(), R.drawable.ic_call_missed_black_36dp));
             holder.mMissedCallNumname.setText(Call.getNumName(getActivity(), mDataset.get(position).number));
             holder.mMissedCallDateTime.setText(mDataset.get(position).date_time);
-
+            holder.mCallNumberSecret.setText(mDataset.get(position).number);
         }
 
         // Return the size of your dataset (invoked by the layout manager)
         @Override
         public int getItemCount() {
             return mDataset.size();
+        }
+    }
+
+    public void refreshCallList () {
+        Log.d(TAG, "refreshCallList");
+        mDataset.clear();
+        mDataset.addAll(mDBHelper.retrieveMissedCalls(ApplicationMain.READ_DB));
+        mAdapter.notifyDataSetChanged();
+    }
+
+    public void clearCallList () {
+        Log.d(TAG, "clearCallList");
+        mDBHelper.clearMissedCalls(ApplicationMain.WRITE_DB);
+        mDataset.clear();
+        mDataset.addAll(mDBHelper.retrieveMissedCalls(ApplicationMain.READ_DB));
+        mAdapter.notifyDataSetChanged();
+    }
+
+    private class OnNumberClickListener implements View.OnClickListener
+    {
+        @Override
+        public void onClick(final View v)
+        {
+            TextView t = (TextView) v.findViewById(R.id.missed_call_number_secret);
+            if (t != null) {
+                String number = t.getText().toString().trim();
+                Intent callIntent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + number));
+                startActivity(callIntent);
+            }
         }
     }
 }

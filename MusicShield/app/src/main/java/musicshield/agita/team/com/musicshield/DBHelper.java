@@ -16,7 +16,7 @@ import java.util.ArrayList;
 public class DBHelper extends SQLiteOpenHelper {
     private static final String TAG = "DBHelper";
     // If you change the database schema, you must increment the database version.
-    public static final int DATABASE_VERSION = 1;
+    public static final int DATABASE_VERSION = 3;
     public static final String DATABASE_NAME = "MusicShield.db";
 
     private static final String TEXT_TYPE = " TEXT";
@@ -27,7 +27,8 @@ public class DBHelper extends SQLiteOpenHelper {
                     CallColumns._ID + " INTEGER PRIMARY KEY," +
                     CallColumns.COL_CALL_NUMBER + TEXT_TYPE + SEP +
                     CallColumns.COL_CALL_TIME + TEXT_TYPE + SEP +
-                    CallColumns.COL_CALL_STATUS + INT_TYPE +
+                    CallColumns.COL_CALL_STATUS + INT_TYPE + SEP +
+                    CallColumns.COL_IS_ACTIVE + INT_TYPE +
             " )";
 
     private static final String SQL_DELETE_ENTRIES =
@@ -58,6 +59,7 @@ public class DBHelper extends SQLiteOpenHelper {
         public static final String COL_CALL_NUMBER = "number";
         public static final String COL_CALL_TIME = "date_time";
         public static final String COL_CALL_STATUS = "status";
+        public static final String COL_IS_ACTIVE = "isactive";
     }
 
     private Integer callTypeToInt (CallType type) {
@@ -82,43 +84,58 @@ public class DBHelper extends SQLiteOpenHelper {
 
     /*-----------API-----------*/
 
-    public long insertMissedCall (SQLiteDatabase db, String number, String dateTime, CallType type) {
+    public void insertMissedCall (SQLiteDatabase db, String number, String dateTime, CallType type) {
         Log.d(TAG, "insertMissedCall: " + number);
         // Create a new map of values, where column names are the keys
         ContentValues values = new ContentValues();
         values.put(CallColumns.COL_CALL_NUMBER, number);
         values.put(CallColumns.COL_CALL_TIME, dateTime);
         values.put(CallColumns.COL_CALL_STATUS, callTypeToInt(type));
+        values.put(CallColumns.COL_IS_ACTIVE, 1);
         // Insert the new row, returning the primary key value of the new row
-        return db.insert(CallColumns.TABLE_NAME, null, values);
+        try {
+            db.insert(CallColumns.TABLE_NAME, null, values);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void clearMissedCalls (SQLiteDatabase db) {
         Log.d(TAG, "clearMissedCalls");
         // Define 'where' part of query.
-        String condition = "1 = ?";
-        // Specify arguments in placeholder order.
-        String[] conditionArgs = { "1" };
+        String condition = "1 = 1";
         // Issue SQL statement.
-        db.delete(CallColumns.TABLE_NAME, condition, conditionArgs);
+        ContentValues cv = new ContentValues();
+        cv.put(CallColumns.COL_IS_ACTIVE, "0");
+        try {
+            db.update(CallColumns.TABLE_NAME, cv, condition, null);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public ArrayList<Call> retrieveMissedCalls (SQLiteDatabase db) {
         Log.d(TAG, "retrieveMissedCalls");
         ArrayList<Call> calls = new ArrayList<Call>();
-        Cursor cursor = db.rawQuery("SELECT * FROM " + CallColumns.TABLE_NAME + " ORDER BY _ID DESC",null);
+        try {
+            Cursor cursor = db.rawQuery("SELECT * FROM " +
+                    CallColumns.TABLE_NAME + " WHERE " + CallColumns.COL_IS_ACTIVE
+                    + " = 1 " +"ORDER BY _ID DESC", null);
 
-        if (cursor .moveToFirst()) {
-            while (!cursor.isAfterLast()) {
-                calls.add(new Call(
-                        cursor.getString(cursor.getColumnIndex(CallColumns.COL_CALL_NUMBER)),
-                        cursor.getString(cursor.getColumnIndex(CallColumns.COL_CALL_TIME)),
-                        intToCallType(cursor.getInt(cursor.getColumnIndex(CallColumns.COL_CALL_STATUS)))
-                ));
-                cursor.moveToNext();
+            if (cursor.moveToFirst()) {
+                while (!cursor.isAfterLast()) {
+                    calls.add(new Call(
+                            cursor.getString(cursor.getColumnIndex(CallColumns.COL_CALL_NUMBER)),
+                            cursor.getString(cursor.getColumnIndex(CallColumns.COL_CALL_TIME)),
+                            intToCallType(cursor.getInt(cursor.getColumnIndex(CallColumns.COL_CALL_STATUS)))
+                    ));
+                    cursor.moveToNext();
+                }
             }
+            cursor.close();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        cursor.close();
         return calls;
     }
 
@@ -140,6 +157,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 values.put(CallColumns.COL_CALL_NUMBER, number);
                 values.put(CallColumns.COL_CALL_TIME, dateTime);
                 values.put(CallColumns.COL_CALL_STATUS, callTypeToInt(type));
+                values.put(CallColumns.COL_IS_ACTIVE, 1);
 
                 // Insert the new row, returning the primary key value of the new row
                 db.insert(CallColumns.TABLE_NAME, null, values);

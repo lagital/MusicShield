@@ -9,11 +9,12 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
 public class ActivityMain extends AppCompatActivity {
-
+    private static final String TAG = "ActivityMain";
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
      * fragments for each of the sections. We use a
@@ -29,6 +30,9 @@ public class ActivityMain extends AppCompatActivity {
      */
     private ViewPager mViewPager;
     private Menu mMenu;
+    private Toolbar mToolbar;
+    private FragmentMain mFragmentMain;
+    private FragmentMissedCalls mFragmentMissedCalls;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,8 +41,8 @@ public class ActivityMain extends AppCompatActivity {
 
         Intent intent = getIntent();
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(mToolbar);
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
@@ -53,6 +57,7 @@ public class ActivityMain extends AppCompatActivity {
         mMenu = menu;
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main2, menu);
+        updateToolbar(0);
         return true;
     }
 
@@ -61,20 +66,54 @@ public class ActivityMain extends AppCompatActivity {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
+            switch (item.getItemId()) {
+                case R.id.action_settings:
+                    Log.d(TAG, "onOptionsItemSelected: Settings");
+                    Intent i = new Intent(this, ActivitySettings.class);
+                    startActivity(i);
+                    return true;
+                case R.id.action_refresh_missed_calls:
+                    Log.d(TAG, "onOptionsItemSelected: Refresh Calls");
+                    if (mFragmentMissedCalls == null) {
+                        Log.d(TAG, "onOptionsItemSelected: " + "wrong fragment");
+                    } else {
+                        mFragmentMissedCalls.refreshCallList();
+                    }
+                    return true;
+                case R.id.action_clear_missed_calls:
+                    Log.d(TAG, "onOptionsItemSelected: Clear Calls");
+                    if (mFragmentMissedCalls == null) {
+                        Log.d(TAG, "onOptionsItemSelected: " + "wrong fragment");
+                    } else {
+                        mFragmentMissedCalls.clearCallList();
+                    }
+                    return true;
+            }
         return super.onOptionsItemSelected(item);
     }
 
-    public void showClearMissedCallsBtn (boolean showMenu){
+    public void updateToolbar (Integer position){
         if(mMenu == null)
             return;
-        mMenu.setGroupVisible(R.id.clear_missed_calls_group, showMenu);
+        switch (position) {
+            case 0:
+                mMenu.setGroupVisible(R.id.missed_calls_group, false);
+                mMenu.setGroupVisible(R.id.settings_group, true);
+                try {
+                    mToolbar.setTitle(R.string.app_name);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                break;
+            case 1:
+                mMenu.setGroupVisible(R.id.settings_group, false);
+                mMenu.setGroupVisible(R.id.missed_calls_group, true);
+                try {
+                    mToolbar.setTitle(R.string.toolbar_title_missed_calls);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+        }
     }
 
     /**
@@ -93,9 +132,15 @@ public class ActivityMain extends AppCompatActivity {
             // Return a Fragment (defined as a static inner class below).
             // TODO: new fragment with missed calls
             switch (position) {
-                case 0: return FragmentMain.newInstance(position);
-                case 1: return FragmentMissedCalls.newInstance(position);
-                default: return FragmentMissedCalls.newInstance(position);
+                case 0:
+                    mFragmentMain = FragmentMain.newInstance(position);
+                    return mFragmentMain;
+                case 1:
+                    mFragmentMissedCalls = FragmentMissedCalls.newInstance(position);
+                    return mFragmentMissedCalls;
+                default:
+                    mFragmentMain = FragmentMain.newInstance(position);
+                    return mFragmentMain;
             }
         }
 

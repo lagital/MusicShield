@@ -46,6 +46,13 @@
                 android:layout_toRightOf="@+id/missed_call_icon"
                 android:layout_below="@+id/missed_call_numname"
                 />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/missed_call_number_secret"
+                android:visibility="gone"
+                />
         </RelativeLayout>
     </android.support.v7.widget.CardView>
 </LinearLayout>
