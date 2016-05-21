@@ -211,7 +211,8 @@ public class ControlService extends Service {
      */
     private void showNotification() {
         Intent resultIntent = new Intent(this, ActivityMain.class);
-        PendingIntent pendingIntent = PendingIntent.getService
+        resultIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        PendingIntent pendingIntent = PendingIntent.getActivity
                 (this, NOTIFICATION, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(this)
@@ -228,7 +229,7 @@ public class ControlService extends Service {
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         Notification n = mBuilder.build();
         n.contentView.setImageViewResource(R.drawable.man_icon_hi, R.drawable.man_icon_hi);
-        n.flags = Notification.FLAG_ONGOING_EVENT;
+        n.flags |= Notification.FLAG_ONGOING_EVENT;
         // mId allows you to update the notification later on.
         mNotificationManager.notify(NOTIFICATION, n);
     }
