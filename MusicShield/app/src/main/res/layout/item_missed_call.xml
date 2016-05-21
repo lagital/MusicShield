@@ -25,6 +25,7 @@
                 android:layout_alignParentLeft="true"
                 android:layout_alignParentTop="true"
                 android:layout_marginRight="16dp"
+                android:src="@drawable/ic_call_missed_black_36dp"
                 android:contentDescription="@string/missed_call_icon"
                 />
 
@@ -34,8 +35,9 @@
                 android:id="@+id/missed_call_numname"
                 android:layout_toRightOf="@+id/missed_call_icon"
                 android:layout_alignParentTop="true"
+                android:text="Test Number"
                 android:textColor="@color/primary_text"
-                android:textSize="30sp"
+                android:textSize="25sp"
                 />
 
             <TextView
@@ -43,6 +45,7 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/missed_call_date_time"
                 android:textColor="@color/secondary_text"
+                android:text="Test Date"
                 android:layout_toRightOf="@+id/missed_call_icon"
                 android:layout_below="@+id/missed_call_numname"
                 />

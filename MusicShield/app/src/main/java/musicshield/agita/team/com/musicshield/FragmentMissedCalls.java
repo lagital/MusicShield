@@ -18,7 +18,9 @@ import android.widget.Toast;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 
+import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 /**
  * Created by pborisenko on 5/14/2016.
@@ -66,7 +68,8 @@ public class FragmentMissedCalls extends Fragment {
         mLayoutManager = new LinearLayoutManager(getActivity());
         mRecyclerView.setLayoutManager(mLayoutManager);
 
-        mDBHelper.debugInsertMissedCall(ApplicationMain.WRITE_DB, "TEST", "test", DBHelper.CallType.BLOCKED);
+        mDBHelper.debugInsertMissedCall(ApplicationMain.WRITE_DB, "TEST",
+                DateFormat.getDateTimeInstance().format(new Date()), DBHelper.CallType.BLOCKED);
         mDataset = mDBHelper.retrieveMissedCalls(ApplicationMain.READ_DB);
 
         // specify an adapter (see also next example)
@@ -133,7 +136,7 @@ public class FragmentMissedCalls extends Fragment {
             holder.mMissedCallIcon.setBackground(
                     ContextCompat.getDrawable(getActivity(), R.drawable.ic_call_missed_black_36dp));
             holder.mMissedCallNumname.setText(Call.getNumName(getActivity(), mDataset.get(position).number));
-            holder.mMissedCallDateTime.setText(mDataset.get(position).date_time);
+            holder.mMissedCallDateTime.setText(Call.getFormattedCallDate(getActivity(), mDataset.get(position).date_time));
             holder.mCallNumberSecret.setText(mDataset.get(position).number);
         }
 

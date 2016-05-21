@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Music Shield</string>
+    <string name="action_clean">Очистить</string>
+    <string name="action_refresh">Обновить</string>
+    <string name="action_settings">Настройки</string>
+    <string name="activity_settings_title">Настройки</string>
+    <string name="date_today_title">Сегодня</string>
+    <string name="date_yesterday_title">Вчера</string>
+    <string name="missed_call_icon">Пропущенный звонок</string>
+    <string name="missed_call_list_rec_view">Пропущенные звонки</string>
+    <string name="notification_missed_calls_title">Пропущенные звонки:</string>
+    <string name="notification_title">Блокировка включена</string>
+    <string name="setting_rate">Оценить</string>
+    <string name="setting_share">Поделиться</string>
+    <string name="setting_support_letter">Напишите нам</string>
+    <string name="share_body">Я использую Musoc Shild, чтобы сделать свою жизнь гармоничней!\n</string>
+    <string name="support_email_body_title">Пожалуйста, не редактируйте информацию ниже</string>
+    <string name="support_email_subject">Письмо от пользователя Music Shield</string>
+    <string name="title_activity_activity_settings">Настройки</string>
+    <string name="toolbar_title_missed_calls">Пропущенные звонки</string>
+    <string name="update_availability_status_title">Доступно обновление!</string>
+</resources>

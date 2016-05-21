@@ -5,7 +5,9 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.ContactsContract;
-import android.util.Log;
+import android.text.format.DateUtils;
+
+import java.text.DateFormat;
 
 /**
  * Created by pborisenko on 5/13/2016.
@@ -40,5 +42,27 @@ public class Call {
         }
 
         return (contactName == null || contactName == "")?phoneNumber:contactName;
+    }
+
+    public static String getFormattedCallDate(Context context, String date) {
+        long t;
+        try {
+            t = DateFormat.getDateInstance().parse(date).getTime();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return date;
+        }
+
+        if (DateUtils.isToday(t)) {
+            return date.replaceAll("^(.*?)\\.", context.getResources()
+                    .getString(R.string.date_today_title) + ".");
+        }
+
+        if (DateUtils.isToday(t + 86400000)) {
+            return date.replaceAll("^(.*?)\\.", context.getResources()
+                    .getString(R.string.date_yesterday_title) + ".");
+        }
+
+        return date;
     }
 }

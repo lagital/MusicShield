@@ -215,9 +215,9 @@ public class ControlService extends Service {
                 (this, NOTIFICATION, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(this)
-                        .setSmallIcon(R.drawable.man_icon_hi)
+                        .setSmallIcon(R.drawable.ic_notification_small)
                         .setLargeIcon(BitmapFactory.decodeResource(getResources(),
-                                R.drawable.logo_enabled))
+                                R.drawable.ic_notification_large))
                         .setContentTitle(getResources().getString(R.string.notification_title))
                         .setContentIntent(pendingIntent)
                         .setContentText(getResources().getString(R.string.notification_missed_calls_title)
