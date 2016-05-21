@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.samsara.team.apps.musicshield">
+    package="musicshield.agita.team.com.musicshield">
 
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
 
     <application
-        android:name="com.samsara.team.apps.musicshield.ApplicationMain"
+        android:name=".ApplicationMain"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name="com.samsara.team.apps.musicshield.ActivityMain"
+            android:name=".ActivityMain"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
@@ -23,13 +23,13 @@
                 <action android:name="musicshield.agita.team.com.musicshield.ACTIVITYMAIN" />
             </intent-filter>
         </activity>
-        <service android:name="com.samsara.team.apps.musicshield.ControlService">
+        <service android:name=".ControlService">
             <intent-filter>
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </service>
         <activity
-            android:name="com.samsara.team.apps.musicshield.ActivitySettings"
+            android:name=".ActivitySettings"
             android:label="@string/title_activity_activity_settings">
         </activity>
     </application>
