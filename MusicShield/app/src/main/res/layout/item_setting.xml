@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/setting_template">
+    <android.support.v7.widget.CardView
+        xmlns:card_view="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/setting_card"
+        android:layout_gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        card_view:cardBackgroundColor="@color/missed_call_card"
+        android:layout_marginBottom="1dp"
+        android:foreground="?android:attr/selectableItemBackground"
+        android:clickable="true">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp"
+            android:orientation="horizontal"
+            >
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/setting_icon"
+                android:layout_marginRight="16dp"
+                android:layout_marginEnd="16dp"
+                android:src="@drawable/ic_email_black_36dp"
+                android:layout_gravity="center_horizontal"
+                android:contentDescription="@string/missed_call_icon"
+                />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/setting_text"
+                android:text="Test"
+                android:layout_gravity="center_horizontal"
+                android:textColor="@color/primary_text"
+                android:textSize="30sp"
+                />
+        </LinearLayout>
+    </android.support.v7.widget.CardView>
+</LinearLayout>

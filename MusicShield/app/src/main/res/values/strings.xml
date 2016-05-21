@@ -21,6 +21,17 @@
     <string name="action_clean">Clean</string>
     <!--Missed Calls Fragment-->
     <string name="toolbar_title_missed_calls">Missed Calls</string>
+    <!--Settings-->
+    <string name="activity_settings_title">Settings</string>
+    <string name="setting_support_letter">Contact Us</string>
+    <string name="support_email_address">samsara.inbox@gmail.com</string>
+    <string name="support_email_subject">Letter from Music Shield User</string>
+    <string name="setting_share">Share App</string>
+    <string name="share_subject">Music Shield</string>
+    <string name="share_title">Music Shield</string>
+    <string name="share_body">I use Music Shield to make my life harmonious!\n</string>
+    <string name="setting_rate">Rate App</string>
+    <string name="support_email_body_title">We kindly ask you to leave this info as it is</string>
 
     <!-- Strings related to Settings -->
     <!-- Example General settings -->
