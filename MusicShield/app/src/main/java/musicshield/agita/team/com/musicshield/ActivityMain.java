@@ -1,6 +1,9 @@
 package musicshield.agita.team.com.musicshield;
 
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 
@@ -9,6 +12,9 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.ImageSpan;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -85,7 +91,21 @@ public class ActivityMain extends AppCompatActivity {
                     if (mFragmentMissedCalls == null) {
                         Log.d(TAG, "onOptionsItemSelected: " + "wrong fragment");
                     } else {
-                        mFragmentMissedCalls.clearCallList();
+                        new AlertDialog.Builder(this)
+                                .setTitle(getResources().getString(R.string.alert_clear_title))
+                                .setMessage(getResources().getString(R.string.alert_clear_question))
+                                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        mFragmentMissedCalls.clearCallList();
+                                    }
+                                })
+                                .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        // do nothing
+                                    }
+                                })
+                                .setIcon(android.R.drawable.ic_dialog_alert)
+                                .show();
                     }
                     return true;
             }
@@ -99,20 +119,10 @@ public class ActivityMain extends AppCompatActivity {
             case 0:
                 mMenu.setGroupVisible(R.id.missed_calls_group, false);
                 mMenu.setGroupVisible(R.id.settings_group, true);
-                try {
-                    mToolbar.setTitle(R.string.app_name);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
                 break;
             case 1:
                 mMenu.setGroupVisible(R.id.settings_group, false);
                 mMenu.setGroupVisible(R.id.missed_calls_group, true);
-                try {
-                    mToolbar.setTitle(R.string.toolbar_title_missed_calls);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
         }
     }
 
@@ -152,13 +162,24 @@ public class ActivityMain extends AppCompatActivity {
 
         @Override
         public CharSequence getPageTitle(int position) {
-            switch (position) {
-                case 0:
-                    return "Shield";
-                case 1:
-                    return "Missed Calls";
-            }
-            return null;
+            SpannableStringBuilder sb = new SpannableStringBuilder(" " + tabName[position]); // space added before text for convenience
+
+            Drawable drawable = getResources().getDrawable(tabImageResId[position]);
+            drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
+            ImageSpan span = new ImageSpan(drawable, ImageSpan.ALIGN_BOTTOM);
+            sb.setSpan(span, 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+            return sb;
         }
+
+        private String[] tabName = {
+                getResources().getString(R.string.tab_title_home),
+                getResources().getString(R.string.tab_title_missed_calls)
+        };
+
+        private int[] tabImageResId = {
+                R.drawable.ic_home_black_24dp,
+                R.drawable.ic_call_missed_black_24dp
+        };
     }
 }

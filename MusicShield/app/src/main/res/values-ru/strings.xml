@@ -18,6 +18,9 @@
     <string name="support_email_body_title">Пожалуйста, не редактируйте информацию ниже</string>
     <string name="support_email_subject">Письмо от пользователя Music Shield</string>
     <string name="title_activity_activity_settings">Настройки</string>
-    <string name="toolbar_title_missed_calls">Пропущенные звонки</string>
     <string name="update_availability_status_title">Доступно обновление!</string>
+    <string name="tab_title_home">ГЛАВНАЯ</string>
+    <string name="tab_title_missed_calls">ПРОПУЩЕННЫЕ</string>
+    <string name="alert_clear_question">Вы уверены, что хотите очистить пропущенные звонки?</string>
+    <string name="alert_clear_title">Очистить список</string>
 </resources>
