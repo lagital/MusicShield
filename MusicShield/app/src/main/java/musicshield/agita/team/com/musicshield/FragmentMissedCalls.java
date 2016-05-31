@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -13,7 +12,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
@@ -68,12 +66,15 @@ public class FragmentMissedCalls extends Fragment {
         mLayoutManager = new LinearLayoutManager(getActivity());
         mRecyclerView.setLayoutManager(mLayoutManager);
 
-        mDBHelper.debugInsertMissedCall(ApplicationMain.WRITE_DB, "TEST",
+        mDBHelper.debugInsertMissedCall(ApplicationMain.WRITE_DB, "+8 888 888-88-88",
+                DateFormat.getDateTimeInstance().format(new Date()), DBHelper.CallType.BLOCKED);
+        mDBHelper.debugInsertMissedCall(ApplicationMain.WRITE_DB, "+7 777 777-77-77",
                 DateFormat.getDateTimeInstance().format(new Date()), DBHelper.CallType.BLOCKED);
         mDataset = mDBHelper.retrieveMissedCalls(ApplicationMain.READ_DB);
 
         // specify an adapter (see also next example)
         mAdapter = new MissedCallsAdapter(mDataset);
+        //mRecyclerView.addItemDecoration(new DividerItemDecoration(getActivity(), LinearLayoutManager.VERTICAL));
         mRecyclerView.setAdapter(mAdapter);
 
         return rootView;
@@ -100,7 +101,7 @@ public class FragmentMissedCalls extends Fragment {
             public ImageView mMissedCallIcon;
             public TextView mMissedCallNumname;
             public TextView mMissedCallDateTime;
-            public TextView mCallNumberSecret;
+            public TextView mMissedCallNumberSecret;
 
             public ViewHolder(View v) {
                 super(v);
@@ -108,7 +109,7 @@ public class FragmentMissedCalls extends Fragment {
                 mMissedCallIcon = (ImageView) v.findViewById(R.id.missed_call_icon);
                 mMissedCallNumname = (TextView) v.findViewById(R.id.missed_call_numname);
                 mMissedCallDateTime = (TextView) v.findViewById(R.id.missed_call_date_time);
-                mCallNumberSecret = (TextView) v.findViewById(R.id.missed_call_number_secret);
+                mMissedCallNumberSecret = (TextView) v.findViewById(R.id.missed_call_number_secret);
                 v.setOnClickListener(new OnNumberClickListener());
             }
         }
@@ -133,11 +134,10 @@ public class FragmentMissedCalls extends Fragment {
         public void onBindViewHolder(ViewHolder holder, int position) {
             // - get element from your dataset at this position
             // - replace the contents of the view with that element
-            holder.mMissedCallIcon.setBackground(
-                    ContextCompat.getDrawable(getActivity(), R.drawable.ic_call_missed_black_36dp));
+            holder.mMissedCallIcon.setBackground(Call.getPhoto(getActivity(), mDataset.get(position).number));
             holder.mMissedCallNumname.setText(Call.getNumName(getActivity(), mDataset.get(position).number));
             holder.mMissedCallDateTime.setText(Call.getFormattedCallDate(getActivity(), mDataset.get(position).date_time));
-            holder.mCallNumberSecret.setText(mDataset.get(position).number);
+            holder.mMissedCallNumberSecret.setText(mDataset.get(position).number);
         }
 
         // Return the size of your dataset (invoked by the layout manager)

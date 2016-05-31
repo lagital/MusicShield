@@ -1,31 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
+
+<android.support.v7.widget.CardView xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/missed_call_card_view"
+    android:layout_gravity="center"
     android:layout_width="match_parent"
+    android:layout_margin="0dp"
     android:layout_height="wrap_content"
-    android:id="@+id/missed_call_view">
-    <android.support.v7.widget.CardView
-        xmlns:card_view="http://schemas.android.com/apk/res-auto"
-        android:id="@+id/missed_call_card_view"
-        android:layout_gravity="center"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        card_view:cardCornerRadius="4dp"
-        card_view:cardBackgroundColor="@color/missed_call_card"
-        android:layout_margin="5dp">
+    android:focusable="true"
+    android:clickable="true"
+    android:foreground="?android:selectableItemBackground"
+    card_view:cardBackgroundColor="@color/missed_call_card">
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="16dp"
+            android:layout_height="match_parent"
+            android:padding="8dp"
             >
             <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
                 android:id="@+id/missed_call_icon"
                 android:layout_alignParentLeft="true"
-                android:layout_alignParentTop="true"
+                android:layout_alignParentStart="true"
+                android:layout_centerHorizontal="true"
                 android:layout_marginRight="16dp"
-                android:src="@drawable/ic_call_missed_black_36dp"
+                android:layout_marginEnd="16dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
+                android:layout_marginLeft="8dp"
+                android:layout_marginStart="8dp"
                 android:contentDescription="@string/missed_call_icon"
                 />
 
@@ -34,10 +37,12 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/missed_call_numname"
                 android:layout_toRightOf="@+id/missed_call_icon"
+                android:layout_toEndOf="@+id/missed_call_icon"
                 android:layout_alignParentTop="true"
                 android:text="Test Number"
+                android:layout_marginTop="5dp"
                 android:textColor="@color/primary_text"
-                android:textSize="25sp"
+                android:textSize="@dimen/subheading_title"
                 />
 
             <TextView
@@ -47,7 +52,10 @@
                 android:textColor="@color/secondary_text"
                 android:text="Test Date"
                 android:layout_toRightOf="@+id/missed_call_icon"
+                android:layout_toEndOf="@+id/missed_call_icon"
+                android:layout_marginBottom="11dp"
                 android:layout_below="@+id/missed_call_numname"
+                android:textSize="@dimen/subheading_subtitle"
                 />
 
             <TextView
@@ -58,4 +66,3 @@
                 />
         </RelativeLayout>
     </android.support.v7.widget.CardView>
-</LinearLayout>

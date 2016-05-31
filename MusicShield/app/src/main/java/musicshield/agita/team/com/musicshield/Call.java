@@ -3,10 +3,15 @@ package musicshield.agita.team.com.musicshield;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.provider.ContactsContract;
+import android.support.v4.content.res.ResourcesCompat;
 import android.text.format.DateUtils;
 
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.text.DateFormat;
 
 /**
@@ -18,6 +23,7 @@ public class Call {
     public String number;
     public String date_time;
     public DBHelper.CallType status;
+    public Bitmap photo;
 
     Call(String i_number, String i_date_time, DBHelper.CallType i_type){
         number = i_number;
@@ -64,5 +70,39 @@ public class Call {
         }
 
         return date;
+    }
+
+    public static Drawable getPhoto (Context context, String phoneNumber) {
+        ContentResolver cr = context.getContentResolver();
+        Uri uri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(phoneNumber));
+        Cursor cursor = cr.query(uri, new String[]{ContactsContract.PhoneLookup.PHOTO_THUMBNAIL_URI}, null, null, null);
+        if (cursor == null) {
+            return null;
+        }
+        String u = null;
+        Uri contactPhotoUri = null;
+        Drawable result = null;
+        if(cursor.moveToFirst()) {
+            u = cursor.getString(cursor.getColumnIndex(ContactsContract.PhoneLookup.PHOTO_THUMBNAIL_URI));
+        }
+
+        if(!cursor.isClosed()) {
+            cursor.close();
+        }
+
+        result = ResourcesCompat.getDrawable(context.getResources(),
+                R.drawable.ic_person_black_36dp, null);
+
+        if (u != null) {
+            contactPhotoUri = Uri.parse(u);
+            try {
+                InputStream inputStream = context.getContentResolver().openInputStream(contactPhotoUri);
+                result = Drawable.createFromStream(inputStream, contactPhotoUri.toString());
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return result;
     }
 }
