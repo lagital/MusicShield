@@ -26,6 +26,7 @@
     <string name="action_clean">Clear</string>
     <string name="tab_title_home">HOME</string>
     <string name="tab_title_missed_calls">MISSED CALLS</string>
+    <string name="tab_title_contacts">CONTACTS</string>
     <string name="alert_clear_question">Are you sure you want to clear missed calls?</string>
     <string name="alert_clear_title">Clear list</string>
 

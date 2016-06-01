@@ -40,6 +40,7 @@ public class ActivityMain extends AppCompatActivity {
     private Toolbar mToolbar;
     private FragmentMain mFragmentMain;
     private FragmentMissedCalls mFragmentMissedCalls;
+    private FragmentContacts mFragmentContacts;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -148,6 +149,9 @@ public class ActivityMain extends AppCompatActivity {
                 case 1:
                     mFragmentMissedCalls = FragmentMissedCalls.newInstance(position);
                     return mFragmentMissedCalls;
+                case 2:
+                    mFragmentContacts = FragmentContacts.newInstance(position);
+                    return mFragmentContacts;
                 default:
                     mFragmentMain = FragmentMain.newInstance(position);
                     return mFragmentMain;
@@ -156,8 +160,8 @@ public class ActivityMain extends AppCompatActivity {
 
         @Override
         public int getCount() {
-            // Show 2 total pages.
-            return 2;
+            // Show 3 total pages.
+            return 3;
         }
 
         @Override
@@ -174,12 +178,14 @@ public class ActivityMain extends AppCompatActivity {
 
         private String[] tabName = {
                 getResources().getString(R.string.tab_title_home),
-                getResources().getString(R.string.tab_title_missed_calls)
+                getResources().getString(R.string.tab_title_missed_calls),
+                getResources().getString(R.string.tab_title_contacts)
         };
 
         private int[] tabImageResId = {
                 R.drawable.ic_home_black_24dp,
-                R.drawable.ic_call_missed_black_24dp
+                R.drawable.ic_call_missed_black_24dp,
+                R.drawable.ic_contacts_black_24dp
         };
     }
 }
