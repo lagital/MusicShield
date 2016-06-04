@@ -73,7 +73,6 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     private CallType intToCallType (Integer intg) {
-        Log.d(TAG, "intToCallType");
         switch (intg) {
             case 1: return CallType.ANSWERED;
             case 0: return CallType.MISSED;

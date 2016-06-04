@@ -13,9 +13,6 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdView;
-
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -33,7 +30,6 @@ public class FragmentMissedCalls extends Fragment {
     private LinearLayoutManager mLayoutManager;
     private DBHelper mDBHelper;
     private ArrayList<Call> mDataset;
-    private AdView mAdView;
 
     public static FragmentMissedCalls newInstance(int sectionNumber) {
         FragmentMissedCalls fragment = new FragmentMissedCalls();
@@ -57,10 +53,6 @@ public class FragmentMissedCalls extends Fragment {
         // use this setting to improve performance if you know that changes
         // in content do not change the layout size of the RecyclerView
         mRecyclerView.setHasFixedSize(true);
-
-        mAdView = (AdView) rootView.findViewById(R.id.adView);
-        AdRequest adRequest = new AdRequest.Builder().build();
-        mAdView.loadAd(adRequest);
 
         // use a linear layout manager
         mLayoutManager = new LinearLayoutManager(getActivity());

@@ -1,7 +1,6 @@
 package musicshield.agita.team.com.musicshield;
 
 import android.content.Intent;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -16,14 +15,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdView;
-
-import org.w3c.dom.Text;
-
-import java.text.DateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 
 /**
  * Created by pborisenko on 5/14/2016.
@@ -37,7 +29,6 @@ public class FragmentContacts extends Fragment {
     private RecyclerView mRecyclerView;
     private LinearLayoutManager mLayoutManager;
     private ArrayList<Contact> mDataset;
-    private AdView mAdView;
 
     public static FragmentContacts newInstance(int sectionNumber) {
         FragmentContacts fragment = new FragmentContacts();
@@ -60,10 +51,6 @@ public class FragmentContacts extends Fragment {
         // use this setting to improve performance if you know that changes
         // in content do not change the layout size of the RecyclerView
         mRecyclerView.setHasFixedSize(true);
-
-        mAdView = (AdView) rootView.findViewById(R.id.adView);
-        AdRequest adRequest = new AdRequest.Builder().build();
-        mAdView.loadAd(adRequest);
 
         // use a linear layout manager
         mLayoutManager = new LinearLayoutManager(getActivity());
