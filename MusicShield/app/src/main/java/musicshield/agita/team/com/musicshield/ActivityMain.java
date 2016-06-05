@@ -107,6 +107,9 @@ public class ActivityMain extends AppCompatActivity {
                                 .setIcon(android.R.drawable.ic_dialog_alert)
                                 .show();
                     }
+                case R.id.action_save_conacts:
+                    Log.d(TAG, "onOptionsItemSelected: Save Filter for Contacts");
+                    mFragmentContacts.saveContacts();
                     return true;
             }
         return super.onOptionsItemSelected(item);
@@ -118,11 +121,19 @@ public class ActivityMain extends AppCompatActivity {
         switch (position) {
             case 0:
                 mMenu.setGroupVisible(R.id.missed_calls_group, false);
+                mMenu.setGroupVisible(R.id.contacts_group, false);
                 mMenu.setGroupVisible(R.id.settings_group, true);
                 break;
             case 1:
                 mMenu.setGroupVisible(R.id.settings_group, false);
+                mMenu.setGroupVisible(R.id.contacts_group, false);
                 mMenu.setGroupVisible(R.id.missed_calls_group, true);
+                break;
+            case 2:
+                mMenu.setGroupVisible(R.id.settings_group, false);
+                mMenu.setGroupVisible(R.id.missed_calls_group, false);
+                mMenu.setGroupVisible(R.id.contacts_group, true);
+                break;
         }
     }
 

@@ -24,4 +24,12 @@
             android:icon="@drawable/ic_settings_white_24dp"
             app:showAsAction="ifRoom" />
     </group>
+    <group android:id="@+id/contacts_group">
+        <item
+            android:id="@+id/action_save_conacts"
+            android:orderInCategory="100"
+            android:title="@string/action_save_contacts"
+            android:icon="@drawable/ic_done_white_24dp"
+            app:showAsAction="ifRoom" />
+    </group>
 </menu>

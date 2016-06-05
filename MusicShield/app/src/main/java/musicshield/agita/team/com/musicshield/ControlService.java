@@ -6,10 +6,12 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.AudioManager;
+import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -18,6 +20,7 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.Process;
 import android.support.v4.app.NotificationCompat;
+import android.telephony.PhoneNumberUtils;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -27,6 +30,7 @@ import com.android.internal.telephony.ITelephony;
 import java.lang.reflect.Method;
 import java.text.DateFormat;
 import java.util.Date;
+import java.util.HashSet;
 
 /**
  * Created by pborisenko on 5/8/2016.
@@ -43,6 +47,8 @@ public class ControlService extends Service {
     public static final int STATE_BLOCK_CALLS = 1;
     public static final int STATE_UNBLOCK_CALLS = 0;
     public static final int STATE_PAUSE_BLOCK_CALLS = -1;
+    private static final String PREF_NAME = "musicshield.agita.team.com.musicshield";
+    private static final String CHECKED_NUMBERS = "CHECKED_NUMBERS";
     private int NOTIFICATION = R.string.contorol_service_idt;
 
     private PhoneStateListener mPhoneStateListener;
@@ -56,6 +62,7 @@ public class ControlService extends Service {
     private AudioManager mAudioManager;
     public Integer missedCallsCounter = 0;
     private DBHelper mDBHelper;
+    private SharedPreferences mSP;
 
     // Handler that receives messages from the thread
     private final class ServiceHandler extends Handler {
@@ -88,6 +95,8 @@ public class ControlService extends Service {
         mServiceHandler = new ServiceHandler(thread.getLooper());
         mMessenger = new Messenger(mServiceHandler);
         mNotificationManager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+
+        mSP = this.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
 
         mDBHelper = new DBHelper(this);
 
@@ -171,13 +180,18 @@ public class ControlService extends Service {
                     wasRinging = true;
                     if (mAudioManager.isMusicActive()) {
                         Log.d(TAG, "onCallStateChanged: " + "music is playing.");
-                        if (mCurrentState == MSG_BLOCK_CALLS) {
+                        incomingNumber = Contact.formatNumber(incomingNumber, mTelephonyManager);
+                        if (mCurrentState == MSG_BLOCK_CALLS && !mSP.getStringSet(CHECKED_NUMBERS,
+                                new HashSet<String>()).contains(incomingNumber)) {
                             Log.d(TAG, "onCallStateChanged: " + "state - blocking.");
                             try {
                                 mTelephonyService.endCall();
                                 missedCallsCounter += 1;
                                 String date_time = DateFormat.getDateTimeInstance().format(new Date());
-                                mDBHelper.insertMissedCall(ApplicationMain.WRITE_DB, incomingNumber, date_time,
+
+                                mDBHelper.insertMissedCall(ApplicationMain.WRITE_DB,
+                                        incomingNumber,
+                                        date_time,
                                         DBHelper.CallType.BLOCKED);
                                 showNotification();
                                 Log.d(TAG, "onCallStateChanged: " + "blocked " + incomingNumber

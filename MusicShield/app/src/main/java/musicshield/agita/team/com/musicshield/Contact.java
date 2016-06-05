@@ -2,11 +2,15 @@ package musicshield.agita.team.com.musicshield;
 
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.provider.ContactsContract;
 import android.support.v4.content.res.ResourcesCompat;
+import android.telephony.PhoneNumberUtils;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import java.io.InputStream;
@@ -20,6 +24,7 @@ import java.util.Set;
 public class Contact {
     private static final String TAG = "Contact";
     private static final String CHECKED_NUMBERS = "CHECKED_NUMBERS";
+    private static final String PREF_NAME = "musicshield.agita.team.com.musicshield";
 
     public ArrayList<String> numbers;
     public String name;
@@ -37,21 +42,20 @@ public class Contact {
     public static ArrayList<Contact> retrieveContacts (Context context) {
         Log.d(TAG, "retrieveContacts");
 
+        SharedPreferences sp = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+
         ArrayList<Contact> l = new ArrayList<>();
         String id;
         String name;
         Set<String> checkedNumbers;
         String u; // string uri
-        checkedNumbers = ApplicationMain.PREFERENCES.getStringSet(CHECKED_NUMBERS, null);
+        checkedNumbers = sp.getStringSet(CHECKED_NUMBERS, new HashSet<String>());
+        TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
 
         String selection = ContactsContract.Contacts.IN_VISIBLE_GROUP + " = '"
                 + ("1") + "'";
         String sortOrder = ContactsContract.Contacts.DISPLAY_NAME
                 + " COLLATE LOCALIZED ASC";
-
-        if (checkedNumbers == null) {
-            checkedNumbers = new HashSet<>();
-        }
 
         Drawable defaultPhoto = ResourcesCompat.getDrawable(context.getResources(),
                 R.drawable.ic_person_black_36dp, null);
@@ -97,7 +101,7 @@ public class Contact {
                 try {
                     ArrayList<String> numbers = new ArrayList<>();
                     while (phones.moveToNext()) {
-                        String n = phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                        String n = formatNumber(phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)), telephonyManager);
                         numbers.add(n);
                         if (checkedNumbers.contains(n)) {
                             checked = true;
@@ -117,5 +121,14 @@ public class Contact {
             Log.d(TAG, "cursor is empty");
         }
         return l;
+    }
+
+    public static String formatNumber (String incomingNumber, TelephonyManager tm) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            return PhoneNumberUtils.formatNumber(incomingNumber, tm.getSimCountryIso());
+        } else {
+            return PhoneNumberUtils.formatNumber(incomingNumber);
+        }
+
     }
 }

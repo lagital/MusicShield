@@ -1,7 +1,7 @@
 package musicshield.agita.team.com.musicshield;
 
-import android.content.Intent;
-import android.net.Uri;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
@@ -11,11 +11,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 /**
  * Created by pborisenko on 5/14/2016.
@@ -24,11 +27,14 @@ public class FragmentContacts extends Fragment {
 
     private static final String TAG = "FragmentContacts";
     private static final String ARG_SECTION_NUMBER = "section_number";
+    private static final String PREF_NAME = "musicshield.agita.team.com.musicshield";
+    private static final String CHECKED_NUMBERS = "CHECKED_NUMBERS";
 
     private ContactsAdapter mAdapter;
     private RecyclerView mRecyclerView;
     private LinearLayoutManager mLayoutManager;
     private ArrayList<Contact> mDataset;
+    private SharedPreferences mSP;
 
     public static FragmentContacts newInstance(int sectionNumber) {
         FragmentContacts fragment = new FragmentContacts();
@@ -63,6 +69,8 @@ public class FragmentContacts extends Fragment {
         //mRecyclerView.addItemDecoration(new DividerItemDecoration(getActivity(), LinearLayoutManager.VERTICAL));
         mRecyclerView.setAdapter(mAdapter);
 
+        mSP = getActivity().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+
         return rootView;
     }
 
@@ -71,7 +79,7 @@ public class FragmentContacts extends Fragment {
         super.setUserVisibleHint(isVisibleToUser);
         if (isVisibleToUser) {
             ActivityMain a = (ActivityMain) getActivity();
-            a.updateToolbar(1);
+            a.updateToolbar(2);
         }
     }
 
@@ -96,7 +104,6 @@ public class FragmentContacts extends Fragment {
                 mContactName   = (TextView) v.findViewById(R.id.contact_name);
                 mContactNumbers = (LinearLayout) v.findViewById(R.id.contact_numbers);
                 mContactCheckBox = (CheckBox) v.findViewById(R.id.contact_checkbox);
-                v.setOnClickListener(new OnContactClickListener());
             }
         }
 
@@ -121,14 +128,15 @@ public class FragmentContacts extends Fragment {
             // - get element from your dataset at this position
             // - replace the contents of the view with that element
             holder.mContactIcon.setBackground(mDataset.get(position).photo);
-            holder.mContactCheckBox.setChecked(mDataset.get(position).checked);
             holder.mContactName.setText(mDataset.get(position).name);
-            TextView t;
+            holder.mContactNumbers.removeAllViews();
             for (String n : mDataset.get(position).numbers) {
-                t = (TextView) LayoutInflater.from(getActivity()).inflate(R.layout.contact_text_view, null);
+                TextView t = (TextView) LayoutInflater.from(getActivity()).inflate(R.layout.contact_text_view, null);
                 t.setText(n);
                 holder.mContactNumbers.addView(t);
             }
+            holder.mContactCheckBox.setOnCheckedChangeListener(new OnContactCheckListener(position));
+            holder.mContactCheckBox.setChecked(mDataset.get(position).checked);
         }
 
         // Return the size of your dataset (invoked by the layout manager)
@@ -138,16 +146,38 @@ public class FragmentContacts extends Fragment {
         }
     }
 
-    private class OnContactClickListener implements View.OnClickListener
+    public void saveContacts () {
+        SharedPreferences.Editor editor = mSP.edit();
+        HashSet<String> hs = new HashSet<>();
+        for (Contact c : mDataset) {
+            Log.d(TAG, c.name);
+            if (c.checked) {
+                for (String n : c.numbers) {
+                    hs.add(n);
+                    Log.d(TAG, n + " is checked");
+                }
+            }
+        }
+        editor.putStringSet(CHECKED_NUMBERS, hs);
+        editor.apply();
+
+        Toast.makeText(getActivity(), R.string.save_contacts_toast, Toast.LENGTH_SHORT).show();
+    }
+
+    private class OnContactCheckListener implements CompoundButton.OnCheckedChangeListener
     {
+        private Integer datasetPosition;
+
+        public OnContactCheckListener(Integer position) {
+            datasetPosition = position;
+        }
+
         @Override
-        public void onClick(final View v)
-        {
-            TextView t = (TextView) v.findViewById(R.id.missed_call_number_secret);
-            if (t != null) {
-                String number = t.getText().toString().trim();
-                Intent callIntent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + number));
-                startActivity(callIntent);
+        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+            if (isChecked) {
+                mDataset.get(datasetPosition).checked = true;
+            } else {
+                mDataset.get(datasetPosition).checked = false;
             }
         }
     }

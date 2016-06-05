@@ -66,7 +66,6 @@ public class FragmentMissedCalls extends Fragment {
 
         // specify an adapter (see also next example)
         mAdapter = new MissedCallsAdapter(mDataset);
-        //mRecyclerView.addItemDecoration(new DividerItemDecoration(getActivity(), LinearLayoutManager.VERTICAL));
         mRecyclerView.setAdapter(mAdapter);
 
         return rootView;
