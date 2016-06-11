@@ -31,6 +31,7 @@ import java.lang.reflect.Method;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Created by pborisenko on 5/8/2016.
@@ -180,9 +181,15 @@ public class ControlService extends Service {
                     wasRinging = true;
                     if (mAudioManager.isMusicActive()) {
                         Log.d(TAG, "onCallStateChanged: " + "music is playing.");
-                        incomingNumber = Contact.formatNumber(incomingNumber, mTelephonyManager);
-                        if (mCurrentState == MSG_BLOCK_CALLS && !mSP.getStringSet(CHECKED_NUMBERS,
-                                new HashSet<String>()).contains(incomingNumber)) {
+                        Boolean matched = false;
+                        Set<String> set = mSP.getStringSet(CHECKED_NUMBERS,
+                                new HashSet<String>());
+                        for (String s : set) {
+                            if (!matched) {
+                                matched = PhoneNumberUtils.compare(s, incomingNumber);
+                            }
+                        }
+                        if (mCurrentState == MSG_BLOCK_CALLS && !matched) {
                             Log.d(TAG, "onCallStateChanged: " + "state - blocking.");
                             try {
                                 mTelephonyService.endCall();

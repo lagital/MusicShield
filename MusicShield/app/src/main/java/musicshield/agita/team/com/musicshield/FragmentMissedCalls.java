@@ -58,7 +58,7 @@ public class FragmentMissedCalls extends Fragment {
         mLayoutManager = new LinearLayoutManager(getActivity());
         mRecyclerView.setLayoutManager(mLayoutManager);
 
-        mDBHelper.debugInsertMissedCall(ApplicationMain.WRITE_DB, "+8 888 888-88-88",
+        mDBHelper.debugInsertMissedCall(ApplicationMain.WRITE_DB, "+78888888888",
                 DateFormat.getDateTimeInstance().format(new Date()), DBHelper.CallType.BLOCKED);
         mDBHelper.debugInsertMissedCall(ApplicationMain.WRITE_DB, "+7 777 777-77-77",
                 DateFormat.getDateTimeInstance().format(new Date()), DBHelper.CallType.BLOCKED);

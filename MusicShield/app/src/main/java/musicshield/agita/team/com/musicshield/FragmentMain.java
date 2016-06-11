@@ -16,9 +16,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
+import android.widget.TextView;
 
 /**
  * Created by pborisenko on 5/8/2016.
@@ -29,9 +28,8 @@ public class FragmentMain extends Fragment {
     private static final String TAG = "ActivityMain";
     private static final String ARG_SECTION_NUMBER = "section_number";
 
-    private Button blockCallsBtn;
-    private Button unblockCallsBtn;
     private ImageView logo;
+    private TextView mRateNotifier;
     private ServiceConnection mServiceConnection;
     private Messenger mMessenger = new Messenger(new IncomingHandler());
     /** Messenger for communicating with service. */
@@ -70,48 +68,27 @@ public class FragmentMain extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
         Log.d(TAG, "onCreateView");
 
-        blockCallsBtn = (Button) rootView.findViewById(R.id.block_calls_btn);
-        unblockCallsBtn = (Button) rootView.findViewById(R.id.unblock_calls_btn);
         logo = (ImageView) rootView.findViewById(R.id.logo);
+        mRateNotifier = (TextView) rootView.findViewById(R.id.rate_app_notifier);
+
+        if (ApplicationMain.NOTIFY_RATE) {
+            mRateNotifier.setVisibility(View.VISIBLE);
+            mRateNotifier.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    ActivitySettings.rateApp(getActivity());
+                    mRateNotifier.setVisibility(View.INVISIBLE);
+                }
+            });
+        }
 
         if (serviceExists(ControlService.class)) {
-            blockCallsBtn.setVisibility(View.GONE);
             logo.setImageResource(R.drawable.logo_enabled);
             initiateConnection();
             doBindService();
         } else {
-            unblockCallsBtn.setVisibility(View.GONE);
             logo.setImageResource(R.drawable.logo_disabled);
         }
-
-        blockCallsBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.d(TAG, "Button - block calls");
-                if (!serviceExists(ControlService.class)) {
-                    runService(ControlService.class);
-                    mCurrentServiceState = ControlService.STATE_BLOCK_CALLS;
-                }
-                //sendMessageToService(ControlService.MSG_BLOCK_CALLS);
-                unblockCallsBtn.setVisibility(View.VISIBLE);
-                blockCallsBtn.setVisibility(View.GONE);
-                logo.setImageResource(R.drawable.logo_enabled);
-            }
-        });
-
-        unblockCallsBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.d(TAG, "Button - unblock calls");
-                if (serviceExists(ControlService.class)) {
-                    sendMessageToService(ControlService.MSG_KILL_CONTROL_SERVICE);
-                    mCurrentServiceState = ControlService.STATE_UNBLOCK_CALLS;
-                }
-                unblockCallsBtn.setVisibility(View.GONE);
-                blockCallsBtn.setVisibility(View.VISIBLE);
-                logo.setImageResource(R.drawable.logo_disabled);
-            }
-        });
 
         logo.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -121,8 +98,6 @@ public class FragmentMain extends Fragment {
                         Log.d(TAG, "State: " + Integer.toString(mCurrentServiceState) + "Logo - lets unblock calls");
                         sendMessageToService(ControlService.MSG_KILL_CONTROL_SERVICE);
                         mCurrentServiceState = ControlService.STATE_UNBLOCK_CALLS;
-                        unblockCallsBtn.setVisibility(View.GONE);
-                        blockCallsBtn.setVisibility(View.VISIBLE);
                         logo.setImageResource(R.drawable.logo_disabled);
                         break;
                     case ControlService.STATE_UNBLOCK_CALLS:
@@ -132,15 +107,11 @@ public class FragmentMain extends Fragment {
                         }
                         //sendMessageToService(ControlService.MSG_BLOCK_CALLS);
                         mCurrentServiceState = ControlService.STATE_BLOCK_CALLS;
-                        unblockCallsBtn.setVisibility(View.VISIBLE);
-                        blockCallsBtn.setVisibility(View.GONE);
                         logo.setImageResource(R.drawable.logo_enabled);
                         break;
                     case ControlService.STATE_PAUSE_BLOCK_CALLS:
                         Log.d(TAG, "State: " + Integer.toString(mCurrentServiceState) + "Logo - lets block calls");
                         sendMessageToService(ControlService.MSG_BLOCK_CALLS);
-                        unblockCallsBtn.setVisibility(View.VISIBLE);
-                        blockCallsBtn.setVisibility(View.GONE);
                         logo.setImageResource(R.drawable.logo_enabled);
                         break;
                 }
@@ -250,16 +221,10 @@ public class FragmentMain extends Fragment {
         Log.d(TAG, "updateUI to state " + Integer.toString(mCurrentServiceState));
         switch (mCurrentServiceState) {
             case ControlService.STATE_BLOCK_CALLS:
-                unblockCallsBtn.setVisibility(View.VISIBLE);
-                blockCallsBtn.setVisibility(View.GONE);
                 logo.setImageResource(R.drawable.logo_enabled);
             case ControlService.STATE_UNBLOCK_CALLS:
-                unblockCallsBtn.setVisibility(View.GONE);
-                blockCallsBtn.setVisibility(View.VISIBLE);
                 logo.setImageResource(R.drawable.logo_disabled);
             case ControlService.STATE_PAUSE_BLOCK_CALLS:
-                unblockCallsBtn.setVisibility(View.GONE);
-                blockCallsBtn.setVisibility(View.VISIBLE);
                 logo.setImageResource(R.drawable.logo_disabled);
         }
     }

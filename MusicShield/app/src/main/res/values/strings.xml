@@ -6,6 +6,7 @@
     <string name="block_calls_btn" translatable="false">Shield Up</string>
     <string name="unblock_calls_btn" translatable="false">Shield Down</string>
     <string name="contorol_service_idt" translatable="false">13010</string>
+    <string name="rate_app_notifier_text">RATE APP</string>
 
     <!--Notification-->
     <string name="notification_missed_calls_title">Missed calls:</string>
@@ -36,6 +37,7 @@
     <string name="setting_support_letter">Contact Us</string>
     <string name="support_email_address" translatable="false">samsara.inbox@gmail.com</string>
     <string name="support_email_subject">Letter from Music Shield User</string>
+    <string name="setting_coffee">Get a coffee</string>
     <string name="setting_share">Share App</string>
     <string name="share_subject" translatable="false">Music Shield</string>
     <string name="share_title" translatable="false">Music Shield</string>

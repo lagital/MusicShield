@@ -50,7 +50,6 @@ public class Contact {
         Set<String> checkedNumbers;
         String u; // string uri
         checkedNumbers = sp.getStringSet(CHECKED_NUMBERS, new HashSet<String>());
-        TelephonyManager telephonyManager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
 
         String selection = ContactsContract.Contacts.IN_VISIBLE_GROUP + " = '"
                 + ("1") + "'";
@@ -101,7 +100,7 @@ public class Contact {
                 try {
                     ArrayList<String> numbers = new ArrayList<>();
                     while (phones.moveToNext()) {
-                        String n = formatNumber(phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)), telephonyManager);
+                        String n = phones.getString(phones.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
                         numbers.add(n);
                         if (checkedNumbers.contains(n)) {
                             checked = true;
@@ -121,14 +120,5 @@ public class Contact {
             Log.d(TAG, "cursor is empty");
         }
         return l;
-    }
-
-    public static String formatNumber (String incomingNumber, TelephonyManager tm) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            return PhoneNumberUtils.formatNumber(incomingNumber, tm.getSimCountryIso());
-        } else {
-            return PhoneNumberUtils.formatNumber(incomingNumber);
-        }
-
     }
 }
