@@ -37,13 +37,17 @@
     <string name="setting_support_letter">Contact Us</string>
     <string name="support_email_address" translatable="false">samsara.inbox@gmail.com</string>
     <string name="support_email_subject">Letter from Music Shield User</string>
-    <string name="setting_coffee">Get a coffee</string>
+    <string name="setting_coffee">Treat to coffee</string>
     <string name="setting_share">Share App</string>
     <string name="share_subject" translatable="false">Music Shield</string>
     <string name="share_title" translatable="false">Music Shield</string>
     <string name="share_body">I use Music Shield to make my life harmonious!\n</string>
     <string name="setting_rate">Rate App</string>
     <string name="support_email_body_title">We kindly ask you to leave this info as it is</string>
+    <string name="connection_problem">Please check your connection and try again</string>
+    <string name="alert_buy_coffee">Thank you so much!</string>
+    <string name="alert_buy_coffee_message">Our team really likes a good latte or cappuccino.\nTo continue with payment just click \'OK\'.</string>
+    <string name="successful_purchase">Purchase Completed</string>"
 
     <!--Dates-->
     <string name="date_today_title">Today</string>

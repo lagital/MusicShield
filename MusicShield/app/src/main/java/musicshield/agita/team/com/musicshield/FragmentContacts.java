@@ -2,6 +2,7 @@ package musicshield.agita.team.com.musicshield;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
@@ -14,6 +15,7 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,8 +35,9 @@ public class FragmentContacts extends Fragment {
     private ContactsAdapter mAdapter;
     private RecyclerView mRecyclerView;
     private LinearLayoutManager mLayoutManager;
-    private ArrayList<Contact> mDataset;
+    private ArrayList<Contact> mDataset = null;
     private SharedPreferences mSP;
+    private ProgressBar mBar;
 
     public static FragmentContacts newInstance(int sectionNumber) {
         FragmentContacts fragment = new FragmentContacts();
@@ -62,11 +65,16 @@ public class FragmentContacts extends Fragment {
         mLayoutManager = new LinearLayoutManager(getActivity());
         mRecyclerView.setLayoutManager(mLayoutManager);
 
-        mDataset = Contact.retrieveContacts(getActivity());
+        if (mDataset == null) {
+            mDataset = new ArrayList<>();
+            mBar = (ProgressBar) rootView.findViewById(R.id.progressBar);
+            new ProgressTask().execute();
+        }
 
         // specify an adapter (see also next example)
         mAdapter = new ContactsAdapter(mDataset);
-        //mRecyclerView.addItemDecoration(new DividerItemDecoration(getActivity(), LinearLayoutManager.VERTICAL));
+        mRecyclerView.addItemDecoration(
+                new DividerItemDecoration(getActivity(), null));
         mRecyclerView.setAdapter(mAdapter);
 
         mSP = getActivity().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
@@ -150,7 +158,6 @@ public class FragmentContacts extends Fragment {
         SharedPreferences.Editor editor = mSP.edit();
         HashSet<String> hs = new HashSet<>();
         for (Contact c : mDataset) {
-            Log.d(TAG, c.name);
             if (c.checked) {
                 for (String n : c.numbers) {
                     hs.add(n);
@@ -179,6 +186,30 @@ public class FragmentContacts extends Fragment {
             } else {
                 mDataset.get(datasetPosition).checked = false;
             }
+        }
+    }
+
+    private class ProgressTask extends AsyncTask<Void,Void,ArrayList<Contact>> {
+        @Override
+        protected void onPreExecute(){
+            mRecyclerView.setVisibility(View.GONE);
+            mBar.setVisibility(View.VISIBLE);
+        }
+
+        @Override
+        protected ArrayList<Contact> doInBackground(Void... arg0) {
+            //my stuff is here
+            return Contact.retrieveContacts(getActivity());
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<Contact> contacts) {
+            mBar.setVisibility(View.GONE);
+            mRecyclerView.setVisibility(View.VISIBLE);
+
+            mDataset.clear();
+            mDataset.addAll(contacts);
+            mAdapter.notifyDataSetChanged();
         }
     }
 }

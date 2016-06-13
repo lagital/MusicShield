@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.provider.ContactsContract;
 import android.support.v4.content.res.ResourcesCompat;
@@ -84,7 +85,6 @@ public class Contact {
 
                 if (u != null) {
                     contactPhotoUri = Uri.parse(u);
-                    Log.d(TAG, "URI: " + contactPhotoUri);
                     try {
                         InputStream inputStream = context.getContentResolver().openInputStream(contactPhotoUri);
                         photo = Drawable.createFromStream(inputStream, contactPhotoUri.toString());

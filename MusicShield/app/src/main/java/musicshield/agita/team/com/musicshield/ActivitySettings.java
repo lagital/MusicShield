@@ -3,14 +3,16 @@ package musicshield.agita.team.com.musicshield;
 import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentSender;
 import android.content.ServiceConnection;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
 import android.util.Log;
@@ -27,6 +29,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 /**
  * Settings Activity
@@ -34,11 +37,14 @@ import java.util.ArrayList;
 public class ActivitySettings extends AppCompatActivity {
     private static final String TAG = "ActivitySettings";
 
+    private static final String COFFEE_SKU = "coffee";
+
     private ActionBar mToolbar;
     private LinearLayout mSettingsList;
     IInAppBillingService mService;
     ServiceConnection mServiceConn;
     String mCoffeePrice;
+    private String developerPayloadString;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -140,8 +146,9 @@ public class ActivitySettings extends AppCompatActivity {
         t.setText(R.string.setting_coffee);
         c.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                Log.d(TAG, "onClick - Treat to coffee");
                 ArrayList<String> skuList = new ArrayList<String>();
-                skuList.add("coffee");
+                skuList.add(COFFEE_SKU);
                 Bundle querySkus = new Bundle();
                 querySkus.putStringArrayList("ITEM_ID_LIST", skuList);
 
@@ -150,6 +157,9 @@ public class ActivitySettings extends AppCompatActivity {
                     skuDetails = mService.getSkuDetails(3,
                             getPackageName(), "inapp", querySkus);
                 } catch (RemoteException e) {
+                    Toast.makeText(ActivitySettings.this,
+                            getResources().getString(R.string.connection_problem),
+                            Toast.LENGTH_SHORT).show();
                     e.printStackTrace();
                 }
 
@@ -159,28 +169,36 @@ public class ActivitySettings extends AppCompatActivity {
                     ArrayList<String> responseList
                             = skuDetails.getStringArrayList("DETAILS_LIST");
 
+                    Log.d(TAG, "Skus: " + responseList.toString());
+
                     for (String thisResponse : responseList) {
                         try {
                             JSONObject object = new JSONObject(thisResponse);
                             sku = object.getString("productId");
                             String price = object.getString("price");
-                            if (sku.equals("coffee")) mCoffeePrice = price;
+                            if (sku.equals(COFFEE_SKU)) mCoffeePrice = price;
+
+                            new AlertDialog.Builder(ActivitySettings.this)
+                                    .setTitle(price)
+                                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            makePurchase(COFFEE_SKU);
+                                        }
+                                    })
+                                    .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            // do nothing
+                                        }
+                                    })
+                                    .setIcon(R.drawable.ic_local_cafe_black_36dp)
+                                    .setMessage(getResources().getString(R.string.alert_buy_coffee_message))
+                                    .show();
                         } catch (JSONException e) {
+                            Toast.makeText(ActivitySettings.this,
+                                    getResources().getString(R.string.connection_problem),
+                                    Toast.LENGTH_SHORT).show();
                             e.printStackTrace();
                         }
-                    }
-                }
-
-                if (!sku.equals("")) {
-                    try {
-                        Bundle buyIntentBundle = mService.getBuyIntent(3, getPackageName(),
-                                sku, "inapp", "bGoa+V7g/yqDXvKRqq+JTFn4uQZbPiQJo4pf9RzJ");
-                        PendingIntent pendingIntent = buyIntentBundle.getParcelable("BUY_INTENT");
-                        startIntentSenderForResult(pendingIntent.getIntentSender(),
-                                1001, new Intent(), Integer.valueOf(0), Integer.valueOf(0),
-                                Integer.valueOf(0));
-                    } catch (Exception e) {
-                        e.printStackTrace();
                     }
                 }
             }
@@ -215,7 +233,9 @@ public class ActivitySettings extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        Log.d(TAG, "onActivityResult");
         if (requestCode == 1001) {
+            Log.d(TAG, "RC 1001");
             int responseCode = data.getIntExtra("RESPONSE_CODE", 0);
             String purchaseData = data.getStringExtra("INAPP_PURCHASE_DATA");
             String dataSignature = data.getStringExtra("INAPP_DATA_SIGNATURE");
@@ -225,14 +245,71 @@ public class ActivitySettings extends AppCompatActivity {
                     JSONObject jo = new JSONObject(purchaseData);
                     String sku = jo.getString("productId");
                     String token = jo.getString("purchaseToken");
-                    Toast.makeText(this, "You have bought the " + sku + ". Excellent choice, adventurer!", Toast.LENGTH_LONG).show();
-                    int response = mService.consumePurchase(3, getPackageName(), token);
+                    Toast.makeText(this, getResources().getString(R.string.successful_purchase),
+                            Toast.LENGTH_LONG).show();
+
+                    if (sku.equals(COFFEE_SKU)) {
+                        ConsumeTask t = new ConsumeTask(token);
+                        t.execute();
+                    }
                 }
                 catch (Exception e) {
-                    Toast.makeText(this, "Failed to parse purchase data.", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, getResources().getString(R.string.connection_problem),
+                            Toast.LENGTH_LONG).show();
                     e.printStackTrace();
                 }
             }
+        }
+    }
+
+    private void makePurchase (String sku) {
+        Log.d(TAG, "makePurchase");
+        if (!sku.equals("")) {
+            try {
+                developerPayloadString = generateDeveloperPayload(new Random(),
+                        "abcdefghijklmnopqrstuvwxyz1234567890/+-()&#@%!",
+                        20);
+                Bundle buyIntentBundle = mService.getBuyIntent(3, getPackageName(),
+                        sku, "inapp", developerPayloadString);
+                PendingIntent pendingIntent = buyIntentBundle.getParcelable("BUY_INTENT");
+                startIntentSenderForResult(pendingIntent.getIntentSender(),
+                        1001, new Intent(), Integer.valueOf(0), Integer.valueOf(0),
+                        Integer.valueOf(0));
+            } catch (Exception e) {
+                Toast.makeText(ActivitySettings.this,
+                        getResources().getString(R.string.connection_problem),
+                        Toast.LENGTH_SHORT).show();
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static String generateDeveloperPayload(Random rng, String characters, int length)
+    {
+        char[] text = new char[length];
+        for (int i = 0; i < length; i++)
+        {
+            text[i] = characters.charAt(rng.nextInt(characters.length()));
+        }
+        return new String(text);
+    }
+
+    private class ConsumeTask extends AsyncTask<Void,Void,Void> {
+
+        private String mToken;
+
+        ConsumeTask (String token) {
+            mToken = token;
+        }
+
+        @Override
+        protected Void doInBackground(Void... arg0) {
+            try {
+                int response = mService.consumePurchase(3, getPackageName(), mToken);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
+            return null;
         }
     }
 }

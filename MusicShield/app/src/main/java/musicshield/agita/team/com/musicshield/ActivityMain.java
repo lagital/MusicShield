@@ -19,6 +19,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import java.util.ArrayList;
+
 public class ActivityMain extends AppCompatActivity {
     private static final String TAG = "ActivityMain";
 
@@ -107,9 +109,10 @@ public class ActivityMain extends AppCompatActivity {
                                         // do nothing
                                     }
                                 })
-                                .setIcon(android.R.drawable.ic_dialog_alert)
+                                .setIcon(R.drawable.ic_delete_sweep_black_36dp)
                                 .show();
                     }
+                    return true;
                 case R.id.action_save_conacts:
                     Log.d(TAG, "onOptionsItemSelected: Save Filter for Contacts");
                     mFragmentContacts.saveContacts();

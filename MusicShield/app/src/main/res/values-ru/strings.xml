@@ -23,4 +23,14 @@
     <string name="tab_title_missed_calls">ПРОПУЩЕННЫЕ</string>
     <string name="alert_clear_question">Вы уверены, что хотите очистить пропущенные звонки?</string>
     <string name="alert_clear_title">Очистить список</string>
+    <string name="action_save_contacts">Сохранить</string>
+    <string name="alert_buy_coffee">Большое спасибо!</string>
+    <string name="alert_buy_coffee_message">Наша команда всегда очень рада хорошему латте или капучино.\nДля продолжения покупки просто нажмите \'ОК\'.</string>
+    <string name="connection_problem">Пожалуйста, проверьте подключение и попробуйте снова</string>
+    <string name="contact_item">Контакт</string>
+    <string name="rate_app_notifier_text">ОЦЕНИТЬ</string>
+    <string name="save_contacts_toast">Звонки с выбранных номеров не будут блокироваться</string>
+    <string name="setting_coffee">Угостить кофе</string>
+    <string name="tab_title_contacts">КОНТАКТЫ</string>
+    <string name="successful_purchase">Покупка выполнена</string>
 </resources>
