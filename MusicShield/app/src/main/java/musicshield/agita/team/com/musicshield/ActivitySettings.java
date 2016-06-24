@@ -1,5 +1,6 @@
 package musicshield.agita.team.com.musicshield;
 
+import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
@@ -7,10 +8,12 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.net.Uri;
+import android.nfc.Tag;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -18,6 +21,7 @@ import android.support.v7.widget.CardView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.Window;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -34,16 +38,18 @@ import java.util.Random;
 /**
  * Settings Activity
  */
-public class ActivitySettings extends AppCompatActivity {
+public class ActivitySettings extends AppCompatActivity implements PurchaseDialogFragment.PurchaseDialogListener {
     private static final String TAG = "ActivitySettings";
 
-    private static final String COFFEE_SKU = "coffee";
+    private static final String ESPRESSO_SKU = "espresso";
+    private static final String CAPPUCCINO_SKU = "cappuccino";
+    private static final String LATTE_SKU = "latte";
+    private static final int DIALOG_REQUEST_CODE = 500;
 
     private ActionBar mToolbar;
     private LinearLayout mSettingsList;
     IInAppBillingService mService;
     ServiceConnection mServiceConn;
-    String mCoffeePrice;
     private String developerPayloadString;
 
     @Override
@@ -148,58 +154,41 @@ public class ActivitySettings extends AppCompatActivity {
             public void onClick(View v) {
                 Log.d(TAG, "onClick - Treat to coffee");
                 ArrayList<String> skuList = new ArrayList<String>();
-                skuList.add(COFFEE_SKU);
-                Bundle querySkus = new Bundle();
-                querySkus.putStringArrayList("ITEM_ID_LIST", skuList);
+                skuList.add(ESPRESSO_SKU);
+                skuList.add(CAPPUCCINO_SKU);
+                skuList.add(LATTE_SKU);
 
                 Bundle skuDetails = new Bundle();
-                try {
-                    skuDetails = mService.getSkuDetails(3,
-                            getPackageName(), "inapp", querySkus);
-                } catch (RemoteException e) {
-                    Toast.makeText(ActivitySettings.this,
-                            getResources().getString(R.string.connection_problem),
-                            Toast.LENGTH_SHORT).show();
-                    e.printStackTrace();
+                skuDetails = getSkuDetails(ActivitySettings.this, skuDetails, skuList);
+
+                int response = skuDetails.getInt("RESPONSE_CODE");
+                ArrayList<String> responseList;
+                if (response == 0) {
+                    responseList = skuDetails.getStringArrayList("DETAILS_LIST");
+                } else {
+                    Toast.makeText(ActivitySettings.this, R.string.connection_problem,
+                            Toast.LENGTH_SHORT);
+                    return;
                 }
 
-                String sku = "";
-                int response = skuDetails.getInt("RESPONSE_CODE");
-                if (response == 0) {
-                    ArrayList<String> responseList
-                            = skuDetails.getStringArrayList("DETAILS_LIST");
+                Bundle mart = new Bundle();
 
+                if (responseList == null) {
+                    Toast.makeText(ActivitySettings.this, R.string.no_products_found,
+                            Toast.LENGTH_SHORT);
+                    return;
+                } else {
                     Log.d(TAG, "Skus: " + responseList.toString());
 
-                    for (String thisResponse : responseList) {
-                        try {
-                            JSONObject object = new JSONObject(thisResponse);
-                            sku = object.getString("productId");
-                            String price = object.getString("price");
-                            if (sku.equals(COFFEE_SKU)) mCoffeePrice = price;
+                    mart = getMart(ActivitySettings.this, responseList, mart);
+                }
 
-                            new AlertDialog.Builder(ActivitySettings.this)
-                                    .setTitle(price)
-                                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int which) {
-                                            makePurchase(COFFEE_SKU);
-                                        }
-                                    })
-                                    .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int which) {
-                                            // do nothing
-                                        }
-                                    })
-                                    .setIcon(R.drawable.ic_local_cafe_black_36dp)
-                                    .setMessage(getResources().getString(R.string.alert_buy_coffee_message))
-                                    .show();
-                        } catch (JSONException e) {
-                            Toast.makeText(ActivitySettings.this,
-                                    getResources().getString(R.string.connection_problem),
-                                    Toast.LENGTH_SHORT).show();
-                            e.printStackTrace();
-                        }
-                    }
+                if (mart.containsKey(PurchaseDialogFragment.SKUS_BUNDLE_CODE)) {
+                    PurchaseDialogFragment p = new PurchaseDialogFragment();
+                    p.setArguments(mart);
+                    p.show(getSupportFragmentManager(), "PurchaseDialogFragment");
+                } else {
+                    return;
                 }
             }
         });
@@ -217,7 +206,7 @@ public class ActivitySettings extends AppCompatActivity {
         return s;
     }
 
-    public static void rateApp (Context context) {
+    public static void rateApp(Context context) {
         ApplicationMain.stopRateNotification();
         context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id="
                 + ApplicationMain.getPackageName(context))));
@@ -248,7 +237,8 @@ public class ActivitySettings extends AppCompatActivity {
                     Toast.makeText(this, getResources().getString(R.string.successful_purchase),
                             Toast.LENGTH_LONG).show();
 
-                    if (sku.equals(COFFEE_SKU)) {
+                    if (sku.equals(ESPRESSO_SKU) || sku.equals(CAPPUCCINO_SKU)
+                            || sku.equals(LATTE_SKU)) {
                         ConsumeTask t = new ConsumeTask(token);
                         t.execute();
                     }
@@ -262,26 +252,31 @@ public class ActivitySettings extends AppCompatActivity {
         }
     }
 
-    private void makePurchase (String sku) {
+    public static String makePurchase (Activity activity, String sku, IInAppBillingService service) {
         Log.d(TAG, "makePurchase");
+
         if (!sku.equals("")) {
             try {
-                developerPayloadString = generateDeveloperPayload(new Random(),
+                String developerPayloadString = generateDeveloperPayload(new Random(),
                         "abcdefghijklmnopqrstuvwxyz1234567890/+-()&#@%!",
                         20);
-                Bundle buyIntentBundle = mService.getBuyIntent(3, getPackageName(),
+                Bundle buyIntentBundle = service.getBuyIntent(3, activity.getPackageName(),
                         sku, "inapp", developerPayloadString);
                 PendingIntent pendingIntent = buyIntentBundle.getParcelable("BUY_INTENT");
-                startIntentSenderForResult(pendingIntent.getIntentSender(),
+                activity.startIntentSenderForResult(pendingIntent.getIntentSender(),
                         1001, new Intent(), Integer.valueOf(0), Integer.valueOf(0),
                         Integer.valueOf(0));
+                return developerPayloadString;
             } catch (Exception e) {
-                Toast.makeText(ActivitySettings.this,
-                        getResources().getString(R.string.connection_problem),
+                Toast.makeText(activity,
+                        activity.getResources().getString(R.string.connection_problem),
                         Toast.LENGTH_SHORT).show();
                 e.printStackTrace();
+                return "";
             }
         }
+
+        return "";
     }
 
     public static String generateDeveloperPayload(Random rng, String characters, int length)
@@ -310,6 +305,78 @@ public class ActivitySettings extends AppCompatActivity {
                 e.printStackTrace();
             }
             return null;
+        }
+    }
+
+    private Bundle getSkuDetails (Context context, Bundle skuDetails, ArrayList<String> skuList) {
+        Log.d(TAG, "getSkuDetails");
+
+        Bundle querySkus = new Bundle();
+        querySkus.putStringArrayList("ITEM_ID_LIST", skuList);
+
+        try {
+            skuDetails = mService.getSkuDetails(3,
+                    getPackageName(), "inapp", querySkus);
+        } catch (RemoteException e) {
+            Toast.makeText(context,
+                    getResources().getString(R.string.connection_problem),
+                    Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+        }
+        return skuDetails;
+    }
+
+    private Bundle getMart (Context context, ArrayList<String> responseList, Bundle mart) {
+        Log.d(TAG, "getMart");
+
+        ArrayList<String> skus = new ArrayList<>();
+        ArrayList<String> prices = new ArrayList<>();
+
+        for (String thisResponse : responseList) {
+            try {
+                JSONObject object = new JSONObject(thisResponse);
+                skus.add(object.getString("productId"));
+                prices.add(object.getString("price"));
+            } catch (JSONException e) {
+                Toast.makeText(context, getResources().getString(R.string.connection_problem),
+                        Toast.LENGTH_SHORT).show();
+                e.printStackTrace();
+                return new Bundle();
+            }
+        }
+
+        int s = skus.size();
+        int p = prices.size();
+
+        if (p == s) {
+            String[] skusArray = new String[s];
+            String[] pricesArray = new String[p];
+            skusArray = skus.toArray(skusArray);
+            pricesArray = prices.toArray(pricesArray);
+
+            mart.putStringArray(PurchaseDialogFragment.SKUS_BUNDLE_CODE, skusArray);
+            mart.putStringArray(PurchaseDialogFragment.PRICES_BUNDLE_CODE, pricesArray);
+        }
+
+        return mart;
+    }
+
+    @Override
+    public void onFinishPurchaseDialog(String sku) {
+        Log.d(TAG, "onFinishPurchaseDialog");
+        ActivitySettings.makePurchase(this, sku, mService);
+    }
+
+    public static String mapSku(Context context, String sku) {
+        switch(sku) {
+            case ESPRESSO_SKU:
+                return context.getResources().getString(R.string.espresso);
+            case CAPPUCCINO_SKU:
+                return context.getResources().getString(R.string.cappuccino);
+            case LATTE_SKU:
+                return context.getResources().getString(R.string.latte);
+            default:
+                return sku;
         }
     }
 }

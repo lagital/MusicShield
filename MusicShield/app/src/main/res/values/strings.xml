@@ -45,9 +45,15 @@
     <string name="setting_rate">Rate App</string>
     <string name="support_email_body_title">We kindly ask you to leave this info as it is</string>
     <string name="connection_problem">Please check your connection and try again</string>
+
+    <!--Purchase-->
     <string name="alert_buy_coffee">Thank you so much!</string>
     <string name="alert_buy_coffee_message">Our team really likes a good latte or cappuccino.\nTo continue with payment just click \'OK\'.</string>
     <string name="successful_purchase">Purchase Completed</string>"
+    <string name="no_products_found">No products found :(</string>
+    <string name="espresso">Espresso</string>
+    <string name="cappuccino">Cappuccino</string>
+    <string name="latte">Latte</string>
 
     <!--Dates-->
     <string name="date_today_title">Today</string>

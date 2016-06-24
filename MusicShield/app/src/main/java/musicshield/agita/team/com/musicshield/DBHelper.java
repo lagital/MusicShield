@@ -36,10 +36,8 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public DBHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
-        Log.d(TAG, "Constructor");
     }
     public void onCreate(SQLiteDatabase db) {
-        Log.d(TAG, "onCreate");
         db.execSQL(SQL_CREATE_TABLES);
     }
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {

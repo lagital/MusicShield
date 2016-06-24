@@ -28,7 +28,6 @@ public class ApplicationMain extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.d(TAG, "onCreate");
 
         AsyncTaskInitDB task_a = new AsyncTaskInitDB(this);
         task_a.execute();
@@ -62,7 +61,6 @@ public class ApplicationMain extends Application {
         private Context mContext;
 
         AsyncTaskInitDB (Context context) {
-            Log.d(TAG, "Constructor");
             mContext = context;
         }
 

@@ -33,4 +33,8 @@
     <string name="setting_coffee">Угостить кофе</string>
     <string name="tab_title_contacts">КОНТАКТЫ</string>
     <string name="successful_purchase">Покупка выполнена</string>
+    <string name="no_products_found">Товары не найдены :(</string>
+    <string name="espresso">Эспрессо</string>
+    <string name="latte">Латте</string>
+    <string name="cappuccino">Капучино</string>
 </resources>
