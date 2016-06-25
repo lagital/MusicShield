@@ -4,24 +4,19 @@ import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.net.Uri;
-import android.nfc.Tag;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.Window;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -38,13 +33,16 @@ import java.util.Random;
 /**
  * Settings Activity
  */
+
 public class ActivitySettings extends AppCompatActivity implements PurchaseDialogFragment.PurchaseDialogListener {
     private static final String TAG = "ActivitySettings";
 
-    private static final String ESPRESSO_SKU = "espresso";
-    private static final String CAPPUCCINO_SKU = "cappuccino";
-    private static final String LATTE_SKU = "latte";
-    private static final int DIALOG_REQUEST_CODE = 500;
+    private static final String ESPRESSO_SKU = "aespresso";
+    private static final String CAPPUCCINO_SKU = "bcappuccino";
+    private static final String LATTE_SKU = "clatte";
+    private static final int PURCHASE_REQUEST_CODE = 1001;
+    private static final String DEVELOPER_PAYLOAD_TEMPLATE
+            = "abcdefghijklmnopqrstuvwxyz1234567890/+-()&#@%!";
 
     private ActionBar mToolbar;
     private LinearLayout mSettingsList;
@@ -179,7 +177,6 @@ public class ActivitySettings extends AppCompatActivity implements PurchaseDialo
                     return;
                 } else {
                     Log.d(TAG, "Skus: " + responseList.toString());
-
                     mart = getMart(ActivitySettings.this, responseList, mart);
                 }
 
@@ -187,8 +184,6 @@ public class ActivitySettings extends AppCompatActivity implements PurchaseDialo
                     PurchaseDialogFragment p = new PurchaseDialogFragment();
                     p.setArguments(mart);
                     p.show(getSupportFragmentManager(), "PurchaseDialogFragment");
-                } else {
-                    return;
                 }
             }
         });
@@ -223,8 +218,9 @@ public class ActivitySettings extends AppCompatActivity implements PurchaseDialo
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         Log.d(TAG, "onActivityResult");
-        if (requestCode == 1001) {
-            Log.d(TAG, "RC 1001");
+        if (requestCode == PURCHASE_REQUEST_CODE) {
+            Log.d(TAG, "RC " + Integer.toString(PURCHASE_REQUEST_CODE));
+
             int responseCode = data.getIntExtra("RESPONSE_CODE", 0);
             String purchaseData = data.getStringExtra("INAPP_PURCHASE_DATA");
             String dataSignature = data.getStringExtra("INAPP_DATA_SIGNATURE");
@@ -248,35 +244,33 @@ public class ActivitySettings extends AppCompatActivity implements PurchaseDialo
                             Toast.LENGTH_LONG).show();
                     e.printStackTrace();
                 }
+            } else {
+                Log.d(TAG, "Purchase was cancelled.");
             }
         }
     }
 
-    public static String makePurchase (Activity activity, String sku, IInAppBillingService service) {
+    public static void makePurchase (Activity activity, String sku, IInAppBillingService service) {
         Log.d(TAG, "makePurchase");
 
         if (!sku.equals("")) {
             try {
                 String developerPayloadString = generateDeveloperPayload(new Random(),
-                        "abcdefghijklmnopqrstuvwxyz1234567890/+-()&#@%!",
+                        DEVELOPER_PAYLOAD_TEMPLATE,
                         20);
+                Log.d(TAG, "buyIntentBundle: " + activity.getPackageName() + " " + sku);
                 Bundle buyIntentBundle = service.getBuyIntent(3, activity.getPackageName(),
                         sku, "inapp", developerPayloadString);
                 PendingIntent pendingIntent = buyIntentBundle.getParcelable("BUY_INTENT");
                 activity.startIntentSenderForResult(pendingIntent.getIntentSender(),
-                        1001, new Intent(), Integer.valueOf(0), Integer.valueOf(0),
+                        PURCHASE_REQUEST_CODE, new Intent(), Integer.valueOf(0), Integer.valueOf(0),
                         Integer.valueOf(0));
-                return developerPayloadString;
             } catch (Exception e) {
-                Toast.makeText(activity,
-                        activity.getResources().getString(R.string.connection_problem),
+                Toast.makeText(activity, activity.getResources().getString(R.string.connection_problem),
                         Toast.LENGTH_SHORT).show();
                 e.printStackTrace();
-                return "";
             }
         }
-
-        return "";
     }
 
     public static String generateDeveloperPayload(Random rng, String characters, int length)
@@ -331,12 +325,14 @@ public class ActivitySettings extends AppCompatActivity implements PurchaseDialo
 
         ArrayList<String> skus = new ArrayList<>();
         ArrayList<String> prices = new ArrayList<>();
+        ArrayList<String> currencies = new ArrayList<>();
 
         for (String thisResponse : responseList) {
             try {
                 JSONObject object = new JSONObject(thisResponse);
                 skus.add(object.getString("productId"));
                 prices.add(object.getString("price"));
+                currencies.add(object.getString("price_currency_code"));
             } catch (JSONException e) {
                 Toast.makeText(context, getResources().getString(R.string.connection_problem),
                         Toast.LENGTH_SHORT).show();
@@ -347,24 +343,28 @@ public class ActivitySettings extends AppCompatActivity implements PurchaseDialo
 
         int s = skus.size();
         int p = prices.size();
+        int c = currencies.size();
 
         if (p == s) {
             String[] skusArray = new String[s];
             String[] pricesArray = new String[p];
+            String[] currenciesArray = new String[c];
+
             skusArray = skus.toArray(skusArray);
             pricesArray = prices.toArray(pricesArray);
+            currenciesArray = currencies.toArray(currenciesArray);
 
             mart.putStringArray(PurchaseDialogFragment.SKUS_BUNDLE_CODE, skusArray);
             mart.putStringArray(PurchaseDialogFragment.PRICES_BUNDLE_CODE, pricesArray);
+            mart.putStringArray(PurchaseDialogFragment.CURRENCIES_BUNDLE_CODE, currenciesArray);
         }
-
         return mart;
     }
 
     @Override
     public void onFinishPurchaseDialog(String sku) {
         Log.d(TAG, "onFinishPurchaseDialog");
-        ActivitySettings.makePurchase(this, sku, mService);
+        makePurchase(this, sku, mService);
     }
 
     public static String mapSku(Context context, String sku) {

@@ -8,7 +8,7 @@ android {
         applicationId "musicshield.agita.team.com.musicshield"
         minSdkVersion 16
         targetSdkVersion 23
-        versionCode 5
+        versionCode 3
         versionName "2.0"
     }
     buildTypes {
