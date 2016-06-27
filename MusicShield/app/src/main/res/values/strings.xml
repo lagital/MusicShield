@@ -21,6 +21,9 @@
     <!--AdMob-->
     <string name="title_activity_activity_settings">Settings</string>
 
+    <!-- DEBUG -->
+    <string name="locale" translatable="false">EN</string>
+
     <!--Toolbar-->
     <string name="action_settings">Settings</string>
     <string name="action_refresh">Refresh</string>

@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.util.Log;
+import com.samsara.team.samsaralib.core.SamsaraCore;
 
 /**
  * Created by pborisenko on 5/13/2016.
@@ -31,6 +32,10 @@ public class ApplicationMain extends Application {
 
         AsyncTaskInitDB task_a = new AsyncTaskInitDB(this);
         task_a.execute();
+
+        if (BuildConfig.DEBUG) {
+            SamsaraCore.setLocale(this, null, R.string.locale);
+        }
 
         mSP = this.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         mEditor = mSP.edit();

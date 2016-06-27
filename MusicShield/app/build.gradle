@@ -10,11 +10,12 @@ android {
         targetSdkVersion 23
         versionCode 3
         versionName "2.0"
+        multiDexEnabled true
     }
     buildTypes {
         release {
             shrinkResources true
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles 'proguard-rules.pro'
         }
     }
@@ -30,4 +31,5 @@ dependencies {
     compile 'com.android.support:cardview-v7:23.3.0'
     compile 'com.android.support:recyclerview-v7:23.3.0'
     compile 'com.android.support:support-v4:23.3.0'
+    compile 'com.github.lagital:SamsaraLib:1.0.1'
 }
