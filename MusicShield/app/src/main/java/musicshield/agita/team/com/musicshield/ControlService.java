@@ -174,10 +174,10 @@ public class ControlService extends Service {
             Log.d(TAG, "onCallStateChanged");
             switch(state) {
                 case TelephonyManager.CALL_STATE_RINGING:
-                    Log.d(TAG, "onCallStateChanged: RINGING");
+                    Log.i(TAG, "onCallStateChanged: RINGING");
                     wasRinging = true;
                     if (mAudioManager.isMusicActive()) {
-                        Log.d(TAG, "onCallStateChanged: " + "music is playing.");
+                        Log.i(TAG, "onCallStateChanged: " + "music is playing.");
                         Boolean matched = false;
                         Set<String> set = mSP.getStringSet(CHECKED_NUMBERS,
                                 new HashSet<String>());
@@ -187,7 +187,7 @@ public class ControlService extends Service {
                             }
                         }
                         if (mCurrentState == MSG_BLOCK_CALLS && !matched) {
-                            Log.d(TAG, "onCallStateChanged: " + "state - blocking.");
+                            Log.i(TAG, "onCallStateChanged: " + "state - blocking.");
                             try {
                                 mTelephonyService.endCall();
                                 missedCallsCounter += 1;
@@ -205,10 +205,10 @@ public class ControlService extends Service {
                                 break;
                             }
                         } else {
-                            Log.d(TAG, "onCallStateChanged: " + "state - non-blocking.");
+                            Log.i(TAG, "onCallStateChanged: " + "state - non-blocking.");
                         }
                     } else {
-                        Log.d(TAG, "onCallStateChanged: " + "music is not playing.");
+                        Log.i(TAG, "onCallStateChanged: " + "music is not playing.");
                     }
                     break;
                 case TelephonyManager.CALL_STATE_OFFHOOK:
