@@ -41,12 +41,13 @@
 #-keepattributes *Annotation*
 
 #Keep classes that are referenced on the AndroidManifest
--keep public class * extends android.app.Activity
+-keep public class * extends android.support.v7.app.AppCompatActivity
+-keep public class * extends android.support.v4.app.Fragment;
 -keep public class * extends android.app.Application
 -keep public class * extends android.app.Service
--keep public class * extends android.content.BroadcastReceiver
--keep public class * extends android.content.ContentProvider
--keep public class com.android.vending.licensing.ILicensingService
+-keep public class * extends android.database.sqlite.SQLiteOpenHelper
+-keep public class * android.support.v7.widget.RecyclerView.ItemDecoration
+-keep public class * android.support.v4.app.DialogFragment
 
 
 #To remove debug logs:

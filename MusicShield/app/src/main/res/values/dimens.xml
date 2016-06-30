@@ -7,4 +7,7 @@
     <dimen name="subheading_title">16sp</dimen>
     <dimen name="subheading_subtitle">14sp</dimen>
     <dimen name="rate_app_notifier_text_size">16sp</dimen>
+
+    <!-- Toolbar -->
+    <dimen name="toolbar_right_margin">10dp</dimen>
 </resources>

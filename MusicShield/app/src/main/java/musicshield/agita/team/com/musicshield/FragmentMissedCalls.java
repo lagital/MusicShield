@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -28,6 +29,7 @@ public class FragmentMissedCalls extends Fragment {
     private MissedCallsAdapter mAdapter;
     private RecyclerView mRecyclerView;
     private LinearLayoutManager mLayoutManager;
+    private SwipeRefreshLayout mSwipeRefreshLayout;
     private DBHelper mDBHelper;
     private ArrayList<Call> mDataset;
 
@@ -47,8 +49,16 @@ public class FragmentMissedCalls extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_missed_calls, container, false);
         Log.d(TAG, "onCreateView");
 
+        mSwipeRefreshLayout = (SwipeRefreshLayout) rootView.findViewById(R.id.swipeRefreshLayout);
         mRecyclerView = (RecyclerView) rootView.findViewById(R.id.recycler_view);
         mDBHelper = new DBHelper(getActivity());
+
+        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                refreshCallList();
+            }
+        });
 
         // use this setting to improve performance if you know that changes
         // in content do not change the layout size of the RecyclerView
@@ -143,6 +153,7 @@ public class FragmentMissedCalls extends Fragment {
         mDataset.clear();
         mDataset.addAll(mDBHelper.retrieveMissedCalls(ApplicationMain.READ_DB));
         mAdapter.notifyDataSetChanged();
+        mSwipeRefreshLayout.setRefreshing(false);
     }
 
     public void clearCallList () {

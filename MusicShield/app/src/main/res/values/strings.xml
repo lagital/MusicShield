@@ -34,6 +34,7 @@
     <string name="tab_title_contacts">CONTACTS</string>
     <string name="alert_clear_question">Are you sure you want to clear missed calls?</string>
     <string name="alert_clear_title">Clear list</string>
+    <string name="checkbox_select_all">Select all</string>
 
     <!--Settings-->
     <string name="activity_settings_title">Settings</string>

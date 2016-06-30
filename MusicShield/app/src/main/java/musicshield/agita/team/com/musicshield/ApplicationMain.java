@@ -60,7 +60,7 @@ public class ApplicationMain extends Application {
         READ_DB = readDb;
     }
 
-    private class AsyncTaskInitDB extends AsyncTask {
+    private class AsyncTaskInitDB extends AsyncTask<Void,Void,Void> {
         private static final String TAG = "AsyncTaskInitDB";
 
         private Context mContext;
@@ -70,7 +70,7 @@ public class ApplicationMain extends Application {
         }
 
         @Override
-        protected Object doInBackground(Object[] params) {
+        protected Void doInBackground(Void... params) {
             Log.d(TAG, "doInBackground");
             DBHelper mDbHelper = new DBHelper(mContext);
             ApplicationMain.setWriteDb(mDbHelper.getWritableDatabase());

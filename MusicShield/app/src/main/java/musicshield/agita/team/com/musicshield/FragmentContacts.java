@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -38,6 +39,7 @@ public class FragmentContacts extends Fragment {
     private ArrayList<Contact> mDataset = null;
     private SharedPreferences mSP;
     private ProgressBar mBar;
+    private SwipeRefreshLayout mSwipeRefreshLayout;
 
     public static FragmentContacts newInstance(int sectionNumber) {
         FragmentContacts fragment = new FragmentContacts();
@@ -55,11 +57,20 @@ public class FragmentContacts extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_contacts, container, false);
         Log.d(TAG, "onCreateView");
 
+        mSwipeRefreshLayout = (SwipeRefreshLayout) rootView.findViewById(R.id.swipeRefreshLayout);
         mRecyclerView = (RecyclerView) rootView.findViewById(R.id.recycler_view);
 
         // use this setting to improve performance if you know that changes
         // in content do not change the layout size of the RecyclerView
         mRecyclerView.setHasFixedSize(true);
+
+
+        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                refreshContactList();
+            }
+        });
 
         // use a linear layout manager
         mLayoutManager = new LinearLayoutManager(getActivity());
@@ -68,7 +79,7 @@ public class FragmentContacts extends Fragment {
         if (mDataset == null) {
             mDataset = new ArrayList<>();
             mBar = (ProgressBar) rootView.findViewById(R.id.progressBar);
-            new ProgressTask().execute();
+            new ProgressTask(true).execute();
         }
 
         // specify an adapter (see also next example)
@@ -154,14 +165,14 @@ public class FragmentContacts extends Fragment {
         }
     }
 
-    public void saveContacts () {
+    public void saveCheckedContacts () {
         SharedPreferences.Editor editor = mSP.edit();
         HashSet<String> hs = new HashSet<>();
         for (Contact c : mDataset) {
             if (c.checked) {
                 for (String n : c.numbers) {
                     hs.add(n);
-                    Log.d(TAG, n + " is checked");
+                    Log.d(TAG, n + " " + c.checked.toString());
                 }
             }
         }
@@ -189,27 +200,52 @@ public class FragmentContacts extends Fragment {
         }
     }
 
+    public void selectAllItems (Boolean selected) {
+        for (int i = 0; i < mDataset.size(); i++) {
+            mDataset.get(i).checked = selected;
+        }
+        mAdapter.notifyDataSetChanged();
+    }
+
     private class ProgressTask extends AsyncTask<Void,Void,ArrayList<Contact>> {
+        private Boolean mFirstLoad;
+
+        ProgressTask (boolean firstLoad) {
+            mFirstLoad = firstLoad;
+        }
+
         @Override
         protected void onPreExecute(){
-            mRecyclerView.setVisibility(View.GONE);
-            mBar.setVisibility(View.VISIBLE);
+            if (mFirstLoad) {
+                mRecyclerView.setVisibility(View.GONE);
+                mBar.setVisibility(View.VISIBLE);
+            }
         }
 
         @Override
         protected ArrayList<Contact> doInBackground(Void... arg0) {
-            //my stuff is here
             return Contact.retrieveContacts(getActivity());
         }
 
         @Override
         protected void onPostExecute(ArrayList<Contact> contacts) {
-            mBar.setVisibility(View.GONE);
-            mRecyclerView.setVisibility(View.VISIBLE);
-
             mDataset.clear();
             mDataset.addAll(contacts);
             mAdapter.notifyDataSetChanged();
+
+            if (mFirstLoad) {
+                mBar.setVisibility(View.GONE);
+                mRecyclerView.setVisibility(View.VISIBLE);
+            } else {
+                mSwipeRefreshLayout.setRefreshing(false);
+            }
         }
+    }
+
+    private void refreshContactList () {
+        Log.d(TAG, "refreshContactList");
+        mDataset.clear();
+        new ProgressTask(false).execute();
+        mSwipeRefreshLayout.setRefreshing(false);
     }
 }

@@ -3,8 +3,11 @@ package musicshield.agita.team.com.musicshield;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
+import android.support.design.widget.AppBarLayout;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.AppCompatCheckBox;
 import android.support.v7.widget.Toolbar;
 
 import android.support.v4.app.Fragment;
@@ -18,6 +21,11 @@ import android.text.style.ImageSpan;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.TableLayout;
 
 import java.util.ArrayList;
 
@@ -40,6 +48,9 @@ public class ActivityMain extends AppCompatActivity {
     private ViewPager mViewPager;
     private Menu mMenu;
     private Toolbar mToolbar;
+    private AppBarLayout.LayoutParams mToolbarForContactsParms;
+    private AppBarLayout.LayoutParams mToolbarParms;
+    private AppCompatCheckBox mToolbarCheckbox;
     private FragmentMain mFragmentMain;
     private FragmentMissedCalls mFragmentMissedCalls;
     private FragmentContacts mFragmentContacts;
@@ -53,6 +64,20 @@ public class ActivityMain extends AppCompatActivity {
 
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
+
+        mToolbarParms = new AppBarLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        mToolbarParms.setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS);
+        mToolbarForContactsParms = new AppBarLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        mToolbarForContactsParms.setMargins(
+                0,
+                0,
+                getResources().getDimensionPixelSize(R.dimen.toolbar_right_margin),
+                0);
+        mToolbarForContactsParms.setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS);
 
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
@@ -68,6 +93,22 @@ public class ActivityMain extends AppCompatActivity {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main2, menu);
 
+        mToolbarCheckbox = new AppCompatCheckBox(this, null);
+        TableLayout.LayoutParams lp = new TableLayout.LayoutParams(
+                android.widget.Toolbar.LayoutParams.MATCH_PARENT,
+                android.widget.Toolbar.LayoutParams.MATCH_PARENT);
+        lp.setMargins(10, 10, getResources().getDimensionPixelSize(R.dimen.toolbar_right_margin), 10);
+        mToolbarCheckbox.setLayoutParams(lp);
+        mToolbarCheckbox.setHighlightColor(ContextCompat.getColor(this, R.color.activity_background_color));
+        mToolbarCheckbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                mFragmentContacts.selectAllItems(isChecked);
+            }
+        });
+
+        mMenu.getItem(1).setActionView(mToolbarCheckbox);
+
         updateToolbar(0);
         return true;
     }
@@ -82,14 +123,6 @@ public class ActivityMain extends AppCompatActivity {
                     Log.d(TAG, "onOptionsItemSelected: Settings");
                     Intent i = new Intent(this, ActivitySettings.class);
                     startActivity(i);
-                    return true;
-                case R.id.action_refresh_missed_calls:
-                    Log.d(TAG, "onOptionsItemSelected: Refresh Calls");
-                    if (mFragmentMissedCalls == null) {
-                        Log.d(TAG, "onOptionsItemSelected: " + "wrong fragment");
-                    } else {
-                        mFragmentMissedCalls.refreshCallList();
-                    }
                     return true;
                 case R.id.action_clear_missed_calls:
                     Log.d(TAG, "onOptionsItemSelected: Clear Calls");
@@ -115,7 +148,7 @@ public class ActivityMain extends AppCompatActivity {
                     return true;
                 case R.id.action_save_conacts:
                     Log.d(TAG, "onOptionsItemSelected: Save Filter for Contacts");
-                    mFragmentContacts.saveContacts();
+                    mFragmentContacts.saveCheckedContacts();
                     return true;
             }
         return super.onOptionsItemSelected(item);
@@ -129,16 +162,22 @@ public class ActivityMain extends AppCompatActivity {
                 mMenu.setGroupVisible(R.id.missed_calls_group, false);
                 mMenu.setGroupVisible(R.id.contacts_group, false);
                 mMenu.setGroupVisible(R.id.settings_group, true);
+                mToolbarCheckbox.setVisibility(View.GONE);
+                mToolbar.setLayoutParams(mToolbarParms);
                 break;
             case 1:
                 mMenu.setGroupVisible(R.id.settings_group, false);
                 mMenu.setGroupVisible(R.id.contacts_group, false);
                 mMenu.setGroupVisible(R.id.missed_calls_group, true);
+                mToolbarCheckbox.setVisibility(View.GONE);
+                mToolbar.setLayoutParams(mToolbarParms);
                 break;
             case 2:
                 mMenu.setGroupVisible(R.id.settings_group, false);
                 mMenu.setGroupVisible(R.id.missed_calls_group, false);
                 mMenu.setGroupVisible(R.id.contacts_group, true);
+                mToolbarCheckbox.setVisibility(View.VISIBLE);
+                mToolbar.setLayoutParams(mToolbarForContactsParms);
                 break;
         }
     }
@@ -184,7 +223,7 @@ public class ActivityMain extends AppCompatActivity {
         public CharSequence getPageTitle(int position) {
             SpannableStringBuilder sb = new SpannableStringBuilder(" " + tabName[position]); // space added before text for convenience
 
-            Drawable drawable = getResources().getDrawable(tabImageResId[position]);
+            Drawable drawable = ContextCompat.getDrawable(getParent(), tabImageResId[position]);
             drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
             ImageSpan span = new ImageSpan(drawable, ImageSpan.ALIGN_BOTTOM);
             sb.setSpan(span, 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);

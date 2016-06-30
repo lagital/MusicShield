@@ -37,4 +37,5 @@
     <string name="espresso">Эспрессо</string>
     <string name="latte">Латте</string>
     <string name="cappuccino">Капучино</string>
+    <string name="checkbox_select_all">Выбрать все</string>
 </resources>
