@@ -246,6 +246,5 @@ public class FragmentContacts extends Fragment {
         Log.d(TAG, "refreshContactList");
         mDataset.clear();
         new ProgressTask(false).execute();
-        mSwipeRefreshLayout.setRefreshing(false);
     }
 }

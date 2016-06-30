@@ -1,5 +1,6 @@
 package musicshield.agita.team.com.musicshield;
 
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
@@ -81,7 +82,7 @@ public class ActivityMain extends AppCompatActivity {
 
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
-        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager(), this);
         // Set up the ViewPager with the sections adapter.
         mViewPager = (ViewPager) findViewById(R.id.container);
         mViewPager.setAdapter(mSectionsPagerAdapter);
@@ -187,9 +188,12 @@ public class ActivityMain extends AppCompatActivity {
      * one of the sections/tabs/pages.
      */
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
+        private Context mContext;
 
-        public SectionsPagerAdapter(FragmentManager fm) {
+        public SectionsPagerAdapter(FragmentManager fm, Context context) {
             super(fm);
+
+            mContext = context;
         }
 
         @Override
@@ -223,7 +227,7 @@ public class ActivityMain extends AppCompatActivity {
         public CharSequence getPageTitle(int position) {
             SpannableStringBuilder sb = new SpannableStringBuilder(" " + tabName[position]); // space added before text for convenience
 
-            Drawable drawable = ContextCompat.getDrawable(getParent(), tabImageResId[position]);
+            Drawable drawable = ContextCompat.getDrawable(mContext, tabImageResId[position]);
             drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
             ImageSpan span = new ImageSpan(drawable, ImageSpan.ALIGN_BOTTOM);
             sb.setSpan(span, 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
