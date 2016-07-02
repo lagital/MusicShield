@@ -25,7 +25,7 @@ import android.widget.TextView;
 
 public class FragmentMain extends Fragment {
 
-    private static final String TAG = "ActivityMain";
+    private static final String TAG = "FragmentMain";
     private static final String ARG_SECTION_NUMBER = "section_number";
 
     private ImageView logo;
@@ -149,7 +149,7 @@ public class FragmentMain extends Fragment {
         }
     }
 
-    void sendMessageToService (Integer m) {
+    public void sendMessageToService (Integer m) {
         Log.d(TAG, "sendMessageToService: " + Integer.toString(m));
         if (toServiceMessenger != null) {
             try {
