@@ -8,6 +8,7 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.provider.ContactsContract;
 import android.support.v4.content.res.ResourcesCompat;
+import android.telephony.PhoneNumberUtils;
 import android.util.Log;
 
 import java.io.InputStream;
@@ -116,5 +117,27 @@ public class Contact {
             Log.d(TAG, "cursor is empty");
         }
         return l;
+    }
+
+    public static boolean compareNumbers (String number1, String number2) {
+        /* In case of mask the idea is that mask's length is equal to a number's length.
+         * It is easy for users to fill empty characters of numbers as "*".
+         */
+        if (number1.length() != number2.length()) {
+            return PhoneNumberUtils.compare(number1, number2);
+        }
+        // check number1 is a mask or not
+        if (number1.contains("*")) {
+            char[] numbers1 = number1.toCharArray();
+            char[] numbers2 = number2.toCharArray();
+
+            for (int i=0; i<numbers1.length; i++) {
+                if (numbers1[i] != numbers2[i] && numbers1[i] != '*') {
+                    Log.d(TAG, "compareNumbers: not matched");
+                    return false;
+                }
+            }
+        }
+        return PhoneNumberUtils.compare(number1, number2);
     }
 }

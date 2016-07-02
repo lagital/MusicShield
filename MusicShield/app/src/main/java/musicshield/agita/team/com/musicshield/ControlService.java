@@ -42,12 +42,13 @@ public class ControlService extends Service {
     public static final int MSG_PAUSE_BLOCK_CALLS = -1;
     public static final int MSG_KILL_CONTROL_SERVICE = -2;
     public static final int MSG_GET_STATE = 100;
-    public static final int MSG_UPDATE_WHITE_LIST = 200;
+    public static final int MSG_UPDATE_LISTS = 200;
     public static final int STATE_BLOCK_CALLS = 1;
     public static final int STATE_UNBLOCK_CALLS = 0;
     public static final int STATE_PAUSE_BLOCK_CALLS = -1;
     private static final String PREF_NAME = "musicshield.agita.team.com.musicshield";
     private static final String CHECKED_NUMBERS = "CHECKED_NUMBERS";
+    private static final String BLACK_LIST      = "BLACK_LIST";
     private int NOTIFICATION = R.string.contorol_service_idt;
 
     private PhoneStateListener mPhoneStateListener;
@@ -63,6 +64,7 @@ public class ControlService extends Service {
     private DBHelper mDBHelper;
     private SharedPreferences mSP;
     private Set<String> mCheckedNumbers;
+    private Set<String> mBlackList;
 
     // Handler that receives messages from the thread
     private final class ServiceHandler extends Handler {
@@ -98,6 +100,7 @@ public class ControlService extends Service {
 
         mSP = this.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         mCheckedNumbers = mSP.getStringSet(CHECKED_NUMBERS, new HashSet<String>());
+        mBlackList = mSP.getStringSet(BLACK_LIST, new HashSet<String>());
 
         mDBHelper = new DBHelper(this);
 
@@ -175,6 +178,13 @@ public class ControlService extends Service {
             switch(state) {
                 case TelephonyManager.CALL_STATE_RINGING:
                     Log.i(TAG, "onCallStateChanged: RINGING");
+                    // black list check
+                    for (String s : mBlackList) {
+                        if (Contact.compareNumbers(s, incomingNumber)) {
+                            Log.i(TAG, "onCallStateChanged: " + "number is checked on Contacts list.");
+                            break;
+                        }
+                    }
                     // service state check
                     if (mCurrentState != MSG_BLOCK_CALLS) {
                         Log.i(TAG, "onCallStateChanged: " + "state - non-blocking.");
@@ -186,29 +196,23 @@ public class ControlService extends Service {
                         break;
                     }
                     // white list check
-                    boolean matched = false;
                     for (String s : mCheckedNumbers) {
-                        if (!matched) {
-                            matched = PhoneNumberUtils.compare(s, incomingNumber);
+                        if (PhoneNumberUtils.compare(s, incomingNumber)) {
+                            Log.i(TAG, "onCallStateChanged: " + "number is checked on Contacts list.");
+                            break;
                         }
-                    }
-
-                    if (matched) {
-                        Log.i(TAG, "onCallStateChanged: " + "number is checked on Contacts list.");
-                        break;
                     }
                     // blocking
                     String date_time = DateFormat.getDateTimeInstance().format(new Date());
-                    Log.i(TAG, "onCallStateChanged: " + "start block " + incomingNumber + " on " + date_time);
                     try {
                         mTelephonyService.endCall();
+                        Log.i(TAG, "onCallStateChanged: " + "blocked: " + incomingNumber + " on " + date_time);
                         missedCallsCounter += 1;
                         mDBHelper.insertMissedCall(ApplicationMain.WRITE_DB,
                                 incomingNumber,
                                 date_time,
                                 DBHelper.CallType.BLOCKED);
                         showNotification();
-                        Log.i(TAG, "onCallStateChanged: " + "blocked " + incomingNumber + " on " + date_time);
                     } catch (Exception e) {
                         e.printStackTrace();
                         break;
@@ -263,9 +267,10 @@ public class ControlService extends Service {
                 Log.d(TAG, "processMessage: " + "MSG_UNBLOCK_CALLS");
                 mCurrentState = STATE_UNBLOCK_CALLS;
                 break;
-            case MSG_UPDATE_WHITE_LIST:
+            case MSG_UPDATE_LISTS:
                 Log.d(TAG, "processMessage: " + "MSG_UPDATE_WHITE_LIST");
                 mCheckedNumbers = mSP.getStringSet(CHECKED_NUMBERS, new HashSet<String>());
+                mBlackList = mSP.getStringSet(BLACK_LIST, new HashSet<String>());
                 break;
             case MSG_PAUSE_BLOCK_CALLS:
                 Log.d(TAG, "processMessage: " + "MSG_PAUSE_BLOCK_CALLS");

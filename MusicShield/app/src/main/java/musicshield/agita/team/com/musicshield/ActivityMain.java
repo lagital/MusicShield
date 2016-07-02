@@ -150,7 +150,7 @@ public class ActivityMain extends AppCompatActivity {
                 case R.id.action_save_conacts:
                     Log.d(TAG, "onOptionsItemSelected: Save Filter for Contacts");
                     mFragmentContacts.saveCheckedContacts();
-                    mFragmentMain.sendMessageToService(ControlService.MSG_UPDATE_WHITE_LIST);
+                    mFragmentMain.sendMessageToService(ControlService.MSG_UPDATE_LISTS);
                     return true;
             }
         return super.onOptionsItemSelected(item);
