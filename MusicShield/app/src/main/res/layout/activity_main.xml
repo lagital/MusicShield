@@ -43,4 +43,18 @@
             />
     </android.support.v4.view.ViewPager>
 
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab"
+        app:layout_anchor="@id/container"
+        app:layout_anchorGravity="bottom|right|end"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:background="@android:color/black"
+        app:backgroundTint="@color/blue_grey_500"
+        android:layout_margin="@dimen/fab_margin"
+        android:src="@drawable/ic_security_black_24dp"
+        app:borderWidth="@dimen/fab_border_width"
+        android:clickable="true"
+        app:fabSize="normal" />
+
 </android.support.design.widget.CoordinatorLayout>

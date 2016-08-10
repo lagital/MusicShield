@@ -202,7 +202,6 @@ public class ActivitySettings extends AppCompatActivity implements PurchaseDialo
     }
 
     public static void rateApp(Context context) {
-        ApplicationMain.stopRateNotification();
         context.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id="
                 + ApplicationMain.getPackageName(context))));
     }
@@ -263,8 +262,7 @@ public class ActivitySettings extends AppCompatActivity implements PurchaseDialo
                         sku, "inapp", developerPayloadString);
                 PendingIntent pendingIntent = buyIntentBundle.getParcelable("BUY_INTENT");
                 activity.startIntentSenderForResult(pendingIntent.getIntentSender(),
-                        PURCHASE_REQUEST_CODE, new Intent(), Integer.valueOf(0), Integer.valueOf(0),
-                        Integer.valueOf(0));
+                        PURCHASE_REQUEST_CODE, new Intent(), 0, 0, 0);
             } catch (Exception e) {
                 Toast.makeText(activity, activity.getResources().getString(R.string.connection_problem),
                         Toast.LENGTH_SHORT).show();

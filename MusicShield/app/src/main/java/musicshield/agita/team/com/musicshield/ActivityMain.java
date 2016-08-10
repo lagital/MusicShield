@@ -3,8 +3,10 @@ package musicshield.agita.team.com.musicshield;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.graphics.drawable.Drawable;
 import android.support.design.widget.AppBarLayout;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -24,11 +26,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.TableLayout;
-
-import java.util.ArrayList;
 
 public class ActivityMain extends AppCompatActivity {
     private static final String TAG = "ActivityMain";
@@ -55,16 +54,17 @@ public class ActivityMain extends AppCompatActivity {
     private FragmentMain mFragmentMain;
     private FragmentMissedCalls mFragmentMissedCalls;
     private FragmentContacts mFragmentContacts;
+    private FloatingActionButton mFAB;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Intent intent = getIntent();
-
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
+
+        mFAB = (FloatingActionButton) findViewById(R.id.fab);
 
         mToolbarParms = new AppBarLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -86,6 +86,21 @@ public class ActivityMain extends AppCompatActivity {
         // Set up the ViewPager with the sections adapter.
         mViewPager = (ViewPager) findViewById(R.id.container);
         mViewPager.setAdapter(mSectionsPagerAdapter);
+        mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageSelected(int position) {
+                updateUI(position, ActivityMain.this);
+            }
+
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+            }
+        });
+        updateUI(0, this);
     }
 
     @Override
@@ -100,7 +115,7 @@ public class ActivityMain extends AppCompatActivity {
                 android.widget.Toolbar.LayoutParams.MATCH_PARENT);
         lp.setMargins(10, 10, getResources().getDimensionPixelSize(R.dimen.toolbar_right_margin), 10);
         mToolbarCheckbox.setLayoutParams(lp);
-        mToolbarCheckbox.setHighlightColor(ContextCompat.getColor(this, R.color.activity_background_color));
+        mToolbarCheckbox.setSupportButtonTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.toolbar_checkbox_statelist)));
         mToolbarCheckbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -109,9 +124,9 @@ public class ActivityMain extends AppCompatActivity {
         });
 
         mMenu.getItem(1).setActionView(mToolbarCheckbox);
+        updateUI(0, this);
 
-        updateToolbar(0);
-        return true;
+        return super.onCreateOptionsMenu(menu);
     }
 
     @Override
@@ -125,58 +140,77 @@ public class ActivityMain extends AppCompatActivity {
                     Intent i = new Intent(this, ActivitySettings.class);
                     startActivity(i);
                     return true;
-                case R.id.action_clear_missed_calls:
-                    Log.d(TAG, "onOptionsItemSelected: Clear Calls");
-                    if (mFragmentMissedCalls == null) {
-                        Log.d(TAG, "onOptionsItemSelected: " + "wrong fragment");
-                    } else {
-                        new AlertDialog.Builder(this)
-                                .setTitle(getResources().getString(R.string.alert_clear_title))
-                                .setMessage(getResources().getString(R.string.alert_clear_question))
-                                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        mFragmentMissedCalls.clearCallList();
-                                    }
-                                })
-                                .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        // do nothing
-                                    }
-                                })
-                                .setIcon(R.drawable.ic_delete_sweep_black_36dp)
-                                .show();
-                    }
-                    return true;
-                case R.id.action_save_conacts:
-                    Log.d(TAG, "onOptionsItemSelected: Save Filter for Contacts");
-                    mFragmentContacts.saveCheckedContacts();
-                    mFragmentMain.sendMessageToService(ControlService.MSG_UPDATE_LISTS);
-                    return true;
             }
         return super.onOptionsItemSelected(item);
     }
 
-    public void updateToolbar (Integer position){
+    public void updateUI (Integer position, final Context context){
         if(mMenu == null)
             return;
         switch (position) {
             case 0:
-                mMenu.setGroupVisible(R.id.missed_calls_group, false);
+                mFAB.setImageResource(R.drawable.ic_security_black_24dp);
+                //mFAB.show();
+                mFAB.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        mFragmentMain.update();
+                    }
+                });
+
                 mMenu.setGroupVisible(R.id.contacts_group, false);
                 mMenu.setGroupVisible(R.id.settings_group, true);
                 mToolbarCheckbox.setVisibility(View.GONE);
                 mToolbar.setLayoutParams(mToolbarParms);
                 break;
             case 1:
+                mFAB.setImageResource(R.drawable.ic_delete_sweep_white_24dp);
+                mFAB.show();
+                mFAB.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Log.d(TAG, "FAB: Clear Calls");
+                        if (mFragmentMissedCalls == null) {
+                            Log.d(TAG, "FAB: " + "wrong fragment");
+                        } else {
+                            new AlertDialog.Builder(context)
+                                    .setTitle(getResources().getString(R.string.alert_clear_title))
+                                    .setMessage(getResources().getString(R.string.alert_clear_question))
+                                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            mFragmentMissedCalls.clearCallList();
+                                        }
+                                    })
+                                    .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            // do nothing
+                                        }
+                                    })
+                                    .setIcon(R.drawable.ic_delete_sweep_black_36dp)
+                                    .show();
+                        }
+                    }
+                });
+
                 mMenu.setGroupVisible(R.id.settings_group, false);
                 mMenu.setGroupVisible(R.id.contacts_group, false);
-                mMenu.setGroupVisible(R.id.missed_calls_group, true);
                 mToolbarCheckbox.setVisibility(View.GONE);
                 mToolbar.setLayoutParams(mToolbarParms);
                 break;
             case 2:
+                mFAB.setImageResource(R.drawable.ic_done_white_24dp);
+                mFAB.show();
+                mFAB.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Log.d(TAG, "FAB: Save Filter for Contacts");
+                        mFragmentContacts.saveCheckedContacts();
+                        mFragmentMain.sendMessageToService(ControlService.MSG_UPDATE_LISTS);
+                    }
+                });
+
+
                 mMenu.setGroupVisible(R.id.settings_group, false);
-                mMenu.setGroupVisible(R.id.missed_calls_group, false);
                 mMenu.setGroupVisible(R.id.contacts_group, true);
                 mToolbarCheckbox.setVisibility(View.VISIBLE);
                 mToolbar.setLayoutParams(mToolbarForContactsParms);

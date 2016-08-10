@@ -93,15 +93,6 @@ public class FragmentContacts extends Fragment {
         return rootView;
     }
 
-    @Override
-    public void setUserVisibleHint(boolean isVisibleToUser) {
-        super.setUserVisibleHint(isVisibleToUser);
-        if (isVisibleToUser) {
-            ActivityMain a = (ActivityMain) getActivity();
-            a.updateToolbar(2);
-        }
-    }
-
     private class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder> {
         private ArrayList<Contact> mDataset;
 

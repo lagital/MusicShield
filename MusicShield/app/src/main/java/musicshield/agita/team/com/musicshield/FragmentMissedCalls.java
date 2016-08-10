@@ -81,15 +81,6 @@ public class FragmentMissedCalls extends Fragment {
         return rootView;
     }
 
-    @Override
-    public void setUserVisibleHint(boolean isVisibleToUser) {
-        super.setUserVisibleHint(isVisibleToUser);
-        if (isVisibleToUser) {
-            ActivityMain a = (ActivityMain) getActivity();
-            a.updateToolbar(1);
-        }
-    }
-
     private class MissedCallsAdapter extends RecyclerView.Adapter<MissedCallsAdapter.ViewHolder> {
         private ArrayList<Call> mDataset;
 

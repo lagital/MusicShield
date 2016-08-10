@@ -29,7 +29,6 @@ public class FragmentMain extends Fragment {
     private static final String ARG_SECTION_NUMBER = "section_number";
 
     private ImageView logo;
-    private TextView mRateNotifier;
     private ServiceConnection mServiceConnection;
     private Messenger mMessenger = new Messenger(new IncomingHandler());
     /** Messenger for communicating with service. */
@@ -69,18 +68,6 @@ public class FragmentMain extends Fragment {
         Log.d(TAG, "onCreateView");
 
         logo = (ImageView) rootView.findViewById(R.id.logo);
-        mRateNotifier = (TextView) rootView.findViewById(R.id.rate_app_notifier);
-
-        if (ApplicationMain.NOTIFY_RATE) {
-            mRateNotifier.setVisibility(View.VISIBLE);
-            mRateNotifier.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    ActivitySettings.rateApp(getActivity());
-                    mRateNotifier.setVisibility(View.INVISIBLE);
-                }
-            });
-        }
 
         if (serviceExists(ControlService.class)) {
             logo.setImageResource(R.drawable.logo_enabled);
@@ -93,39 +80,34 @@ public class FragmentMain extends Fragment {
         logo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                switch (mCurrentServiceState) {
-                    case ControlService.STATE_BLOCK_CALLS:
-                        Log.d(TAG, "State: " + Integer.toString(mCurrentServiceState) + "Logo - lets unblock calls");
-                        sendMessageToService(ControlService.MSG_KILL_CONTROL_SERVICE);
-                        mCurrentServiceState = ControlService.STATE_UNBLOCK_CALLS;
-                        logo.setImageResource(R.drawable.logo_disabled);
-                        break;
-                    case ControlService.STATE_UNBLOCK_CALLS:
-                        Log.d(TAG, "State: " + Integer.toString(mCurrentServiceState) + "Logo - lets block calls");
-                        if (!serviceExists(ControlService.class)) {
-                            runService(ControlService.class);
-                        }
-                        //sendMessageToService(ControlService.MSG_BLOCK_CALLS);
-                        mCurrentServiceState = ControlService.STATE_BLOCK_CALLS;
-                        logo.setImageResource(R.drawable.logo_enabled);
-                        break;
-                    case ControlService.STATE_PAUSE_BLOCK_CALLS:
-                        Log.d(TAG, "State: " + Integer.toString(mCurrentServiceState) + "Logo - lets block calls");
-                        sendMessageToService(ControlService.MSG_BLOCK_CALLS);
-                        logo.setImageResource(R.drawable.logo_enabled);
-                        break;
-                }
+                update();
             }
         });
         return rootView;
     }
 
-    @Override
-    public void setUserVisibleHint(boolean isVisibleToUser) {
-        super.setUserVisibleHint(isVisibleToUser);
-        if (isVisibleToUser) {
-            ActivityMain a = (ActivityMain) getActivity();
-            a.updateToolbar(0);
+    public void update () {
+        switch (mCurrentServiceState) {
+            case ControlService.STATE_BLOCK_CALLS:
+                Log.d(TAG, "State: " + Integer.toString(mCurrentServiceState) + "Logo - lets unblock calls");
+                sendMessageToService(ControlService.MSG_KILL_CONTROL_SERVICE);
+                mCurrentServiceState = ControlService.STATE_UNBLOCK_CALLS;
+                logo.setImageResource(R.drawable.logo_disabled);
+                break;
+            case ControlService.STATE_UNBLOCK_CALLS:
+                Log.d(TAG, "State: " + Integer.toString(mCurrentServiceState) + "Logo - lets block calls");
+                if (!serviceExists(ControlService.class)) {
+                    runService(ControlService.class);
+                }
+                //sendMessageToService(ControlService.MSG_BLOCK_CALLS);
+                mCurrentServiceState = ControlService.STATE_BLOCK_CALLS;
+                logo.setImageResource(R.drawable.logo_enabled);
+                break;
+            case ControlService.STATE_PAUSE_BLOCK_CALLS:
+                Log.d(TAG, "State: " + Integer.toString(mCurrentServiceState) + "Logo - lets block calls");
+                sendMessageToService(ControlService.MSG_BLOCK_CALLS);
+                logo.setImageResource(R.drawable.logo_enabled);
+                break;
         }
     }
 
