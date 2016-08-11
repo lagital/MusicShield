@@ -5,11 +5,11 @@
     <color name="blue_grey_500">#607D8B</color>
     <color name="settings_icon_not_rated">#FF9800</color>
 
-    <color name="missed_call_card">#EEEEEE</color>
+    <color name="missed_call_card">#F5F5F5</color>
     <color name="activity_background_color">#FAFAFA</color>
 
     <!--Text-->
     <color name="toolbar">#424242</color>
     <color name="primary_text">#212121</color>
-    <color name="secondary_text">#727272</color>
+    <color name="secondary_text">#757575</color>
 </resources>

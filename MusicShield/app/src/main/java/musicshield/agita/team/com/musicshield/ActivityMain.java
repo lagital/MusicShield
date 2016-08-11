@@ -149,7 +149,7 @@ public class ActivityMain extends AppCompatActivity {
             return;
         switch (position) {
             case 0:
-                mFAB.setImageResource(R.drawable.ic_security_black_24dp);
+                mFAB.setImageResource(R.drawable.ic_security_white_24dp);
                 //mFAB.show();
                 mFAB.setOnClickListener(new View.OnClickListener() {
                     @Override

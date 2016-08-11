@@ -1,6 +1,7 @@
 package musicshield.agita.team.com.musicshield;
 
 import android.app.ActivityManager;
+import android.media.MediaPlayer;
 import android.support.v4.app.Fragment;
 import android.content.ComponentName;
 import android.content.Context;
