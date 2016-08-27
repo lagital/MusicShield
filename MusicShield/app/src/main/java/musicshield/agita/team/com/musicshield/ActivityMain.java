@@ -4,9 +4,9 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.ColorStateList;
-import android.graphics.drawable.Drawable;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.TabLayout;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -18,9 +18,6 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
-import android.text.SpannableStringBuilder;
-import android.text.Spanned;
-import android.text.style.ImageSpan;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -46,6 +43,7 @@ public class ActivityMain extends AppCompatActivity {
      * The {@link ViewPager} that will host the section contents.
      */
     private ViewPager mViewPager;
+    private TabLayout mTabLayout;
     private Menu mMenu;
     private Toolbar mToolbar;
     private AppBarLayout.LayoutParams mToolbarForContactsParms;
@@ -55,6 +53,12 @@ public class ActivityMain extends AppCompatActivity {
     private FragmentMissedCalls mFragmentMissedCalls;
     private FragmentContacts mFragmentContacts;
     private FloatingActionButton mFAB;
+    private int[] tabImageResId = {
+            R.drawable.ic_home_black_24dp,
+
+            R.drawable.ic_call_missed_black_24dp,
+            R.drawable.ic_contacts_black_24dp
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,6 +90,12 @@ public class ActivityMain extends AppCompatActivity {
         // Set up the ViewPager with the sections adapter.
         mViewPager = (ViewPager) findViewById(R.id.container);
         mViewPager.setAdapter(mSectionsPagerAdapter);
+        // Give the TabLayout the ViewPager
+        TabLayout mTabLayout = (TabLayout) findViewById(R.id.sliding_tabs);
+        mTabLayout.setupWithViewPager(mViewPager);
+        for (int i = 0; i < mTabLayout.getTabCount(); i++) {
+            mTabLayout.getTabAt(i).setIcon(tabImageResId[i]);
+        }
         mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
             public void onPageSelected(int position) {
@@ -227,7 +237,6 @@ public class ActivityMain extends AppCompatActivity {
 
         public SectionsPagerAdapter(FragmentManager fm, Context context) {
             super(fm);
-
             mContext = context;
         }
 
@@ -260,26 +269,7 @@ public class ActivityMain extends AppCompatActivity {
 
         @Override
         public CharSequence getPageTitle(int position) {
-            SpannableStringBuilder sb = new SpannableStringBuilder(" " + tabName[position]); // space added before text for convenience
-
-            Drawable drawable = ContextCompat.getDrawable(mContext, tabImageResId[position]);
-            drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
-            ImageSpan span = new ImageSpan(drawable, ImageSpan.ALIGN_BOTTOM);
-            sb.setSpan(span, 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-
-            return sb;
+            return null;
         }
-
-        private String[] tabName = {
-                getResources().getString(R.string.tab_title_home),
-                getResources().getString(R.string.tab_title_missed_calls),
-                getResources().getString(R.string.tab_title_contacts)
-        };
-
-        private int[] tabImageResId = {
-                R.drawable.ic_home_black_24dp,
-                R.drawable.ic_call_missed_black_24dp,
-                R.drawable.ic_contacts_black_24dp
-        };
     }
 }

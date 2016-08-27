@@ -11,11 +11,10 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -41,24 +40,24 @@ public class ActivitySettings extends AppCompatActivity implements PurchaseDialo
     private static final String CAPPUCCINO_SKU = "bcappuccino";
     private static final String LATTE_SKU = "clatte";
     private static final int PURCHASE_REQUEST_CODE = 1001;
-    private static final String DEVELOPER_PAYLOAD_TEMPLATE
-            = "abcdefghijklmnopqrstuvwxyz1234567890/+-()&#@%!";
+    private static final String DEVELOPER_PAYLOAD_TEMPLATE = "abcdefghijklmnopqrstuvwxyz1234567890/+-()&#@%!";
 
-    private ActionBar mToolbar;
+    private Toolbar mToolbar;
+    private IInAppBillingService mService;
+    private ServiceConnection mServiceConn;
     private LinearLayout mSettingsList;
-    IInAppBillingService mService;
-    ServiceConnection mServiceConn;
+
     private String developerPayloadString;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
+        View v;
 
-        mToolbar = getSupportActionBar();
-
-        mSettingsList = (LinearLayout) findViewById(R.id.settings_list);
-        LayoutInflater inflater = (LayoutInflater) getSystemService( Context.LAYOUT_INFLATER_SERVICE );
+        mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(mToolbar);
+        mToolbar.setTitle("Settings");
 
         mServiceConn = new ServiceConnection() {
             @Override
@@ -73,82 +72,65 @@ public class ActivitySettings extends AppCompatActivity implements PurchaseDialo
             }
         };
 
+        mSettingsList = (LinearLayout) findViewById(R.id.settings_list);
+
         Intent serviceIntent =
                 new Intent("com.android.vending.billing.InAppBillingService.BIND");
         serviceIntent.setPackage("com.android.vending");
         bindService(serviceIntent, mServiceConn, Context.BIND_AUTO_CREATE);
 
         // support letter setting
-        View v = inflater.inflate(R.layout.item_setting, null);
-        CardView c = (CardView) v.findViewById(R.id.setting_card);
-        ImageView i = (ImageView) v.findViewById(R.id.setting_icon);
-        i.setImageResource(R.drawable.ic_email_black_36dp);
-        TextView t = (TextView) v.findViewById(R.id.setting_text);
-        t.setText(R.string.setting_support_letter);
-        c.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.d(TAG, "Letter to Support");
-                String uriText =
-                        "mailto:" + getResources().getString(R.string.support_email_address) +
-                                "?subject=" +
-                                Uri.encode(getResources().getString(R.string.support_email_subject)) +
-                                "&body=" + Uri.encode(getSystemInfo());
-                Uri uri = Uri.parse(uriText);
-                Intent sendIntent = new Intent(Intent.ACTION_SENDTO);
-                sendIntent.setData(uri);
-                startActivity(Intent.createChooser(sendIntent, "Send email..."));
-            }
-        });
-        mSettingsList.addView(v);
+        fillSetting(mSettingsList, R.id.contact_us, R.string.setting_support_letter,
+                R.drawable.ic_email_black_36dp,
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View t) {
+                        Log.d(TAG, "Letter to Support");
+                        String uriText =
+                                "mailto:" + getResources().getString(R.string.support_email_address) +
+                                        "?subject=" +
+                                        Uri.encode(getResources().getString(R.string.support_email_subject)) +
+                                        "&body=" + Uri.encode(getSystemInfo());
+                        Uri uri = Uri.parse(uriText);
+                        Intent sendIntent = new Intent(Intent.ACTION_SENDTO);
+                        sendIntent.setData(uri);
+                        startActivity(Intent.createChooser(sendIntent, "Send email..."));
+                    }
+                });
 
         // share setting
-        v = inflater.inflate(R.layout.item_setting, null);
-        c = (CardView) v.findViewById(R.id.setting_card);
-        i = (ImageView) v.findViewById(R.id.setting_icon);
-        i.setImageResource(R.drawable.ic_share_black_36dp);
-        t = (TextView) v.findViewById(R.id.setting_text);
-        t.setText(R.string.setting_share);
-        c.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.d(TAG, "Sharing");
-                Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
-                sharingIntent.setType("text/plain");
-                String shareBody = getResources().getString(R.string.share_body);
-                sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT,
-                        getResources().getString(R.string.share_subject));
-                sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBody
-                        + "https://play.google.com/store/apps/details?id="
-                        + getPackageName());
-                startActivity(Intent.createChooser(sharingIntent,
-                        getResources().getString(R.string.share_title)));
-            }
-        });
-        mSettingsList.addView(v);
+        fillSetting(mSettingsList, R.id.share_app, R.string.setting_share,
+                R.drawable.ic_share_black_36dp,
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Log.d(TAG, "Sharing");
+                        Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
+                        sharingIntent.setType("text/plain");
+                        String shareBody = getResources().getString(R.string.share_body);
+                        sharingIntent.putExtra(android.content.Intent.EXTRA_SUBJECT,
+                                getResources().getString(R.string.share_subject));
+                        sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shareBody
+                                + "https://play.google.com/store/apps/details?id="
+                                + getPackageName());
+                        startActivity(Intent.createChooser(sharingIntent,
+                                getResources().getString(R.string.share_title)));
+                    }
+                });
 
         // rate setting
-        v = inflater.inflate(R.layout.item_setting, null);
-        c = (CardView) v.findViewById(R.id.setting_card);
-        i = (ImageView) v.findViewById(R.id.setting_icon);
-        i.setImageResource(R.drawable.ic_sentiment_satisfied_black_36dp);
-        t = (TextView) v.findViewById(R.id.setting_text);
-        t.setText(R.string.setting_rate);
-        c.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                rateApp(ActivitySettings.this);
-            }
-        });
-        mSettingsList.addView(v);
+        fillSetting(mSettingsList, R.id.rate_app, R.string.setting_rate,
+                R.drawable.ic_sentiment_satisfied_black_36dp,
+                new View.OnClickListener() {
+                    public void onClick(View v) {
+                        rateApp(ActivitySettings.this);
+                    }
+                });
 
         //coffee setting
-        v = inflater.inflate(R.layout.item_setting, null);
-        c = (CardView) v.findViewById(R.id.setting_card);
-        i = (ImageView) v.findViewById(R.id.setting_icon);
-        i.setImageResource(R.drawable.ic_local_cafe_black_36dp);
-        t = (TextView) v.findViewById(R.id.setting_text);
-        t.setText(R.string.setting_coffee);
-        c.setOnClickListener(new View.OnClickListener() {
+        fillSetting(mSettingsList, R.id.treat_to_coffee, R.string.setting_coffee,
+                R.drawable.ic_local_cafe_black_36dp,
+                new View.OnClickListener() {
             public void onClick(View v) {
                 Log.d(TAG, "onClick - Treat to coffee");
                 ArrayList<String> skuList = new ArrayList<String>();
@@ -187,8 +169,6 @@ public class ActivitySettings extends AppCompatActivity implements PurchaseDialo
                 }
             }
         });
-        mSettingsList.addView(v);
-
     }
 
     public String getSystemInfo() {
@@ -376,5 +356,15 @@ public class ActivitySettings extends AppCompatActivity implements PurchaseDialo
             default:
                 return sku;
         }
+    }
+
+    private void fillSetting(View root, Integer elementId, Integer labelRes, Integer iconRes,
+                             View.OnClickListener listener) {
+        CardView c = (CardView) root.findViewById(elementId);
+        ImageView i = (ImageView) c.findViewById(R.id.setting_icon);
+        TextView t = (TextView) c.findViewById(R.id.setting_text);
+        i.setImageResource(iconRes);
+        t.setText(labelRes);
+        c.setOnClickListener(listener);
     }
 }
