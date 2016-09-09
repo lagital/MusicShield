@@ -7,7 +7,11 @@ import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
 
+import com.samsara.team.samsaralib.purchase.SamsaraProduct;
+import com.samsara.team.samsaralib.purchase.SamsaraPurchase;
+
 import java.awt.font.TextAttribute;
+import java.util.ArrayList;
 
 /**
  * Created by pborisenko on 6/24/2016.
@@ -15,37 +19,27 @@ import java.awt.font.TextAttribute;
 public class PurchaseDialogFragment extends DialogFragment {
     private static final String TAG = "PurchaseDialogFragment";
 
-    public static final String SKUS_BUNDLE_CODE = "skus";
-    public static final String PRICES_BUNDLE_CODE = "prices";
-    public static final String CURRENCIES_BUNDLE_CODE = "price_currency_code";
-
-    private String[] mSkus;
-    private String[] mPrices;
-    private String[] mCurruncies;
+    private ArrayList<SamsaraProduct> mProducts;
     private String[] mProductsToShow;
 
     @Override
     public void setArguments(Bundle args) {
         super.setArguments(args);
-        mSkus = args.getStringArray(SKUS_BUNDLE_CODE);
-        mPrices = args.getStringArray(PRICES_BUNDLE_CODE);
-        mCurruncies = args.getStringArray(CURRENCIES_BUNDLE_CODE);
+        mProducts = args.getParcelableArrayList(SamsaraPurchase.MART_LIST);
     }
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 
-        if (mSkus.length == 0) {
-            String[] s = {getResources().getString(R.string.no_products_found)};
-            mProductsToShow = s;
-        } else {
-            mProductsToShow = new String[mSkus.length];
-            //mProductsToShow = getFormattedProductList(mSkus, mPrices, mCurruncies);
-            for (int i = 0; i < mSkus.length; i++) {
-                mProductsToShow[i] = ActivitySettings.mapSku(getContext(), mSkus[i])
-                        + " - " + mPrices[i]
-                        + "(" + mCurruncies[i] + ")";;
+        if (mProducts.size() != 0) {
+            mProductsToShow = new String[mProducts.size()];
+            for (int i = 0; i < mProductsToShow.length; i++) {
+                mProductsToShow[i] = mProducts.get(i).getProductId();
+
+                mProductsToShow[i] = ActivitySettings.mapSku(getContext(), mProducts.get(i).getProductId())
+                        + " - " + mProducts.get(i).getPrice()
+                        + "(" + mProducts.get(i).getPriceCurrencyCode() + ")";;
             }
         }
 
@@ -62,7 +56,11 @@ public class PurchaseDialogFragment extends DialogFragment {
                         // The 'which' argument contains the index position
                         // of the selected item
                         PurchaseDialogListener activity = (PurchaseDialogListener) getActivity();
-                        activity.onFinishPurchaseDialog(mSkus[which]);
+                        if (mProductsToShow.length != 0) {
+                            activity.onFinishPurchaseDialog(mProducts.get(which).getProductId());
+                        } else {
+                            activity.onFinishPurchaseDialog(null);
+                        }
                         PurchaseDialogFragment.this.dismiss();
                     }
                 });
@@ -71,34 +69,5 @@ public class PurchaseDialogFragment extends DialogFragment {
 
     public interface PurchaseDialogListener {
         void onFinishPurchaseDialog(String sku);
-    }
-
-    private String[] getFormattedProductList (String[] skus, String[] prices, String[] currencies) {
-        String[] productsToShow = new String[skus.length];
-        int maxTabLength = 0;
-        String tab = "\t";
-        int tabLength = tab.length();
-        String s;
-
-        for (int i = 0; i < skus.length; i++) {
-            // replace product IDs with product names
-            skus[i] = ActivitySettings.mapSku(getContext(), skus[i]);
-            // detect the biggest product name with tab
-            s = skus[i] + tab;
-            if (s.length() > maxTabLength) {
-                maxTabLength = s.length();
-            }
-        }
-        Log.d(TAG, "maxTabLength " + Integer.toString(maxTabLength));
-        Log.d(TAG, "tabLength " + Integer.toString(tabLength));
-        for (int i=0; i < skus.length; i++) {
-            Log.d(TAG, "sku length " + Integer.toString(skus[i].length()));
-            skus[i] = skus[i] + new String(new char[(maxTabLength - skus[i].length()) / tabLength - 1])
-                    .replace("\0", tab);
-            Log.d(TAG, "sku length " + Integer.toString(skus[i].length()));
-            productsToShow[i] = skus[i] + prices[i] + "(" + currencies[i] + ")";
-        }
-
-        return productsToShow;
     }
 }

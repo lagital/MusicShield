@@ -35,7 +35,7 @@
             style="@style/TabLayout"
             app:tabMaxWidth="0dp"
             app:tabGravity="fill"
-            app:tabBackground="@color/blue_grey_500"
+            app:tabBackground="@color/toolbar"
             app:tabMode="fixed" />
     </android.support.design.widget.AppBarLayout>
 
@@ -53,7 +53,7 @@
         android:layout_width="56dp"
         android:layout_height="56dp"
         android:background="@android:color/black"
-        app:backgroundTint="@color/blue_grey_500"
+        app:backgroundTint="@color/fab"
         android:layout_margin="@dimen/fab_margin"
         android:src="@drawable/ic_security_white_24dp"
         app:borderWidth="@dimen/fab_border_width"

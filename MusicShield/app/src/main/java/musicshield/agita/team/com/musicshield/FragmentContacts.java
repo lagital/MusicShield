@@ -220,8 +220,10 @@ public class FragmentContacts extends Fragment {
 
         @Override
         protected void onPostExecute(ArrayList<Contact> contacts) {
+            ArrayList<Contact> tmpDataset = new ArrayList<>();
+            tmpDataset.addAll(contacts);
             mDataset.clear();
-            mDataset.addAll(contacts);
+            mDataset = tmpDataset;
             mAdapter.notifyDataSetChanged();
 
             if (mFirstLoad) {
