@@ -1,8 +1,0 @@
-<animation-list
-    android:id="@+id/selected"
-    android:oneshot="true"
-    android:drawable="@drawable/ic_settings_white_24dp"
-    xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@drawable/ic_settings_white_24dp" android:duration="100" />
-    <item android:drawable="@drawable/ic_settings_orange_24dp" android:duration="100"/>
-</animation-list>

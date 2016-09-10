@@ -164,6 +164,15 @@ public class ActivitySettings extends AppCompatActivity implements PurchaseDialo
                 }
             }
         });
+
+        // about setting
+        fillSetting(mSettingsList, R.id.about, null, null,
+                new View.OnClickListener() {
+                    public void onClick(View v) {
+                        Intent i = new Intent(ActivitySettings.this, ActivityAbout.class);
+                        startActivity(i);
+                    }
+                });
     }
 
     public String getSystemInfo() {
@@ -248,8 +257,12 @@ public class ActivitySettings extends AppCompatActivity implements PurchaseDialo
         CardView c = (CardView) root.findViewById(elementId);
         ImageView i = (ImageView) c.findViewById(R.id.setting_icon);
         TextView t = (TextView) c.findViewById(R.id.setting_text);
-        i.setImageResource(iconRes);
-        t.setText(labelRes);
+        if (i != null) {
+            i.setImageResource(iconRes);
+        }
+        if (t != null) {
+            t.setText(labelRes);
+        }
         c.setOnClickListener(listener);
     }
 }

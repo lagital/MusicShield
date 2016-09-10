@@ -43,7 +43,6 @@ public class ActivityMain extends AppCompatActivity {
      * The {@link ViewPager} that will host the section contents.
      */
     private ViewPager mViewPager;
-    private TabLayout mTabLayout;
     private Menu mMenu;
     private Toolbar mToolbar;
     private AppBarLayout.LayoutParams mToolbarForContactsParms;
@@ -55,7 +54,6 @@ public class ActivityMain extends AppCompatActivity {
     private FloatingActionButton mFAB;
     private int[] tabImageResId = {
             R.drawable.ic_home_black_24dp,
-
             R.drawable.ic_call_missed_black_24dp,
             R.drawable.ic_contacts_black_24dp
     };
@@ -96,6 +94,8 @@ public class ActivityMain extends AppCompatActivity {
         for (int i = 0; i < mTabLayout.getTabCount(); i++) {
             mTabLayout.getTabAt(i).setIcon(tabImageResId[i]);
         }
+        // set main fragment
+        mViewPager.setCurrentItem(1);
         mViewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
             public void onPageSelected(int position) {
@@ -159,12 +159,31 @@ public class ActivityMain extends AppCompatActivity {
             return;
         switch (position) {
             case 0:
-                mFAB.setImageResource(R.drawable.ic_security_white_24dp);
+                mFAB.setImageResource(R.drawable.ic_done_white_24dp);
+                mFAB.show();
+                mFAB.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Log.d(TAG, "FAB: Save Filter for Contacts");
+                        mFragmentContacts.saveCheckedContacts();
+                        ServiceMessenger.getInstance(ActivityMain.this)
+                                .sendMessageToService(ControlService.MSG_UPDATE_LISTS);
+                    }
+                });
+
+
+                mMenu.setGroupVisible(R.id.settings_group, false);
+                mMenu.setGroupVisible(R.id.contacts_group, true);
+                mToolbarCheckbox.setVisibility(View.VISIBLE);
+                mToolbar.setLayoutParams(mToolbarForContactsParms);
+                break;
+            case 1:
+                mFAB.setImageResource(R.drawable.ic_power_settings_new_white_24dp);
                 //mFAB.show();
                 mFAB.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        mFragmentMain.update();
+                        mFragmentMain.changeBlockingState();
                     }
                 });
 
@@ -173,7 +192,7 @@ public class ActivityMain extends AppCompatActivity {
                 mToolbarCheckbox.setVisibility(View.GONE);
                 mToolbar.setLayoutParams(mToolbarParms);
                 break;
-            case 1:
+            case 2:
                 mFAB.setImageResource(R.drawable.ic_delete_sweep_white_24dp);
                 mFAB.show();
                 mFAB.setOnClickListener(new View.OnClickListener() {
@@ -207,24 +226,6 @@ public class ActivityMain extends AppCompatActivity {
                 mToolbarCheckbox.setVisibility(View.GONE);
                 mToolbar.setLayoutParams(mToolbarParms);
                 break;
-            case 2:
-                mFAB.setImageResource(R.drawable.ic_done_white_24dp);
-                mFAB.show();
-                mFAB.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Log.d(TAG, "FAB: Save Filter for Contacts");
-                        mFragmentContacts.saveCheckedContacts();
-                        mFragmentMain.sendMessageToService(ControlService.MSG_UPDATE_LISTS);
-                    }
-                });
-
-
-                mMenu.setGroupVisible(R.id.settings_group, false);
-                mMenu.setGroupVisible(R.id.contacts_group, true);
-                mToolbarCheckbox.setVisibility(View.VISIBLE);
-                mToolbar.setLayoutParams(mToolbarForContactsParms);
-                break;
         }
     }
 
@@ -247,14 +248,14 @@ public class ActivityMain extends AppCompatActivity {
             // TODO: new fragment with missed calls
             switch (position) {
                 case 0:
-                    mFragmentMain = FragmentMain.newInstance(position);
-                    return mFragmentMain;
-                case 1:
-                    mFragmentMissedCalls = FragmentMissedCalls.newInstance(position);
-                    return mFragmentMissedCalls;
-                case 2:
                     mFragmentContacts = FragmentContacts.newInstance(position);
                     return mFragmentContacts;
+                case 1:
+                    mFragmentMain = FragmentMain.newInstance(position);
+                    return mFragmentMain;
+                case 2:
+                    mFragmentMissedCalls = FragmentMissedCalls.newInstance(position);
+                    return mFragmentMissedCalls;
                 default:
                     mFragmentMain = FragmentMain.newInstance(position);
                     return mFragmentMain;

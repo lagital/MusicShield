@@ -1,5 +1,6 @@
 package musicshield.agita.team.com.musicshield;
 
+import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -16,21 +17,24 @@ import android.util.Log;
  */
 public class ServiceMessenger {
 
-    private static final String TAG = "FragmentMain";
+    private static final String TAG = "ServiceMessenger";
 
     private static ServiceMessenger mServiceMessenger;
     private Context mContext;
+    private ActivityMain mActivity;
     private ServiceConnection mServiceConnection;
     private Boolean mIsBound;
     private Messenger toServiceMessenger;
     private Messenger mMessenger;
-    public Integer currentServiceState = ControlService.STATE_UNBLOCK_CALLS;
+
+    private Integer currentServiceState = ControlService.STATE_UNBLOCK_CALLS;
 
     /* A private Constructor prevents any other
      * class from instantiating.
     */
     private ServiceMessenger(Context context){
         mContext = context;
+        mActivity = (ActivityMain) mContext;
         mMessenger = new Messenger(new ServiceIncomingHandler(context));
         initiateConnection();
         doBindService();
@@ -65,6 +69,10 @@ public class ServiceMessenger {
 
     public void sendMessageToService (Integer m) {
         Log.d(TAG, "sendMessageToService: " + Integer.toString(m));
+        if (m == ControlService.MSG_BLOCK_CALLS) {
+            runService(mActivity, ControlService.class);
+            return;
+        }
         if (toServiceMessenger != null) {
             try {
                 Message msg = Message.obtain(null, m);
@@ -81,21 +89,12 @@ public class ServiceMessenger {
         mServiceConnection = new ServiceConnection() {
             public void onServiceConnected(ComponentName className,
                                            IBinder service) {
-                // This is called when the connection with the service has been
-                // established, giving us the service object we can use to
-                // interact with the service.  We are communicating with our
-                // service through an IDL interface, so get a client-side
-                // representation of that from the raw service object.
                 toServiceMessenger = new Messenger(service);
-                // As part of the sample, tell the user what happened.
                 Log.d(TAG, "onServiceConnected");
             }
 
             public void onServiceDisconnected(ComponentName className) {
-                // This is called when the connection with the service has been
-                // unexpectedly disconnected -- that is, its process crashed.
                 toServiceMessenger = null;
-                // As part of the sample, tell the user what happened.
                 Log.d(TAG, "onServiceDisconnected");
             }
         };
@@ -105,10 +104,6 @@ public class ServiceMessenger {
         context.startService(new Intent(context, serviceClass));
         initiateConnection();
         doBindService();
-    }
-
-    public void setCurrentServiceState(Integer currentServiceState) {
-        this.currentServiceState = currentServiceState;
     }
 
     private static class ServiceIncomingHandler extends Handler {
@@ -123,7 +118,26 @@ public class ServiceMessenger {
         public void handleMessage(Message msg) {
             Log.d(TAG, "Message handled: " + Integer.toString(msg.arg1));
             ServiceMessenger.getInstance(mContext).setCurrentServiceState(msg.arg1);
-            // TODO: UPDATE UI
         }
+    }
+
+    public static boolean serviceExists(Context context, Class<?> serviceClass) {
+        Log.d(TAG, "serviceExists");
+        ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                Log.d(TAG, "checkAndRunService: " + "service found.");
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void setCurrentServiceState(Integer currentServiceState) {
+        this.currentServiceState = currentServiceState;
+    }
+
+    public Integer getCurrentServiceState() {
+        return currentServiceState;
     }
 }

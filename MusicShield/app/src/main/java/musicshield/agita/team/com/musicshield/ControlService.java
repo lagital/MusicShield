@@ -250,9 +250,8 @@ public class ControlService extends Service {
         NotificationManager mNotificationManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         Notification n = mBuilder.build();
-        n.contentView.setImageViewResource(R.drawable.man_icon_hi, R.drawable.man_icon_hi);
+        //n.contentView.setImageViewResource(R.drawable.ic_notification_large, R.drawable.man_icon_hi);
         n.flags |= Notification.FLAG_ONGOING_EVENT;
-        // mId allows you to update the notification later on.
         mNotificationManager.notify(NOTIFICATION, n);
     }
 
